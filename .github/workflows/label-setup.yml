@@ -1,0 +1,26 @@
+name: labels setup
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/labels.json
+      - .github/workflows/label-setup.yml
+
+jobs:
+  build:
+    name: labels setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+
+      - name: Install dependencies
+        run: yarn add -D @azu/github-label-setup
+
+      - name: Run label-setup
+        run: yarn github-label-setup --token ${{ secrets.ACCESS_TOKEN_FOR_LABELS }} --labels .github/labels.json
