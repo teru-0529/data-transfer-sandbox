@@ -1,0 +1,33 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TZ: "Asia/Tokyo"
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: ./go.mod
+          cache: true
+
+      - name: Run GoRelease
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

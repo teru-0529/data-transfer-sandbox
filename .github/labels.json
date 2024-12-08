@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Feature",
+    "description": "新規機能追加",
+    "color": "ADFF2F"
+  },
+  {
+    "name": "Emergency",
+    "description": "障害対応(緊急)",
+    "color": "FA8072"
+  },
+  {
+    "name": "Refactoring",
+    "description": "リファクタリング",
+    "color": "FFFF00"
+  },
+  {
+    "name": "Bugfix",
+    "description": "障害対応",
+    "color": "FFC0CB"
+  },
+  {
+    "name": "Documentation",
+    "description": "ドキュメント作成・更新",
+    "color": "AFEEEE"
+  },
+  {
+    "name": "Maintenance",
+    "description": "環境設定・CICD/ワークフロー整備",
+    "color": "D3D3D3"
+  },
+  {
+    "name": "Ignore-for-release",
+    "description": "リリースノート非表示",
+    "color": "FFFFFF"
+  },
+  {
+    "name": "Not-marged",
+    "description": "マージせずにクローズ",
+    "color": "111111"
+  }
+]

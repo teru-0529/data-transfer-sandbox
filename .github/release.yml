@@ -1,0 +1,27 @@
+changelog:
+  exclude:
+    labels:
+      - Ignore-for-release
+
+  categories:
+    - title: 🎉 新規Featureの追加
+      labels:
+        - Feature
+    - title: 🚑 緊急障害対応
+      labels:
+        - Emergency
+    - title: ♻️ リファクタリング
+      labels:
+        - Refactoring
+    - title: 🩹 バグ対応
+      labels:
+        - Bugfix
+    - title: 📑 ドキュメント作成・整理
+      labels:
+        - Documentation
+    - title: 🔧 環境設定・CICD/ワークフロー整備
+      labels:
+        - Maintenance
+    - title: その他
+      labels:
+        - "*"
