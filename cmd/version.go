@@ -16,12 +16,13 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show semantic version.",
 	Long:  "Show semantic version.",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if full {
 			fmt.Printf("version: %s (releasedAt: %s)", version, releaseDate)
 		} else {
 			fmt.Print(version)
 		}
+		return nil
 	},
 }
 

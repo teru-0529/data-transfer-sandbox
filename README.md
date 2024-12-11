@@ -42,3 +42,43 @@
     ```
 
 4. `実行Log`、および必要な場合は`エラーデータの一覧`を確認する。
+
+## 移行元情報
+
+* [移行元DBレイアウト](docs/source-db.md)
+
+## 移行設計
+
+## 変更履歴
+
+### v0.1.0
+
+* versionコマンドの実装
+
+### v0.2.0
+
+* maigration実行ログの出力
+* 移行元データの件数表示
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+-----
+
+> [!TIP]
+> Helpful advice for doing things better or more easily.
+
+-----
+
+> [!IMPORTANT]
+> Key information users need to know to achieve their goal.
+
+-----
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+-----
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.

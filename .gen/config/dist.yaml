@@ -1,0 +1,15 @@
+pkgname: dist
+output: ../spec/dist/dist
+wipe: true
+no-tests: true
+add-enum-types: true
+no-auto-timestamps: true
+add-global-variants: true
+psql:
+  dbname: distDB
+  host: 127.0.0.1
+  port: 9902
+  user: postgres
+  pass: password
+  sslmode: disable
+  schema: dist

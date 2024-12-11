@@ -3,6 +3,8 @@ Copyright © 2024 Teruaki Sato <andrea.pirlo.0529@gmail.com>
 */
 package infra
 
+// TITLE:環境変数の読込み
+
 import (
 	"log"
 	"os"
@@ -10,8 +12,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 )
-
-// TITLE:環境変数の読込み
 
 // STRUCT:
 type Config struct {
