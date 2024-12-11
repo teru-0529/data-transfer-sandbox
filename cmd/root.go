@@ -39,4 +39,5 @@ func Execute(ver string, date string) {
 func init() {
 	// PROCESS:サブコマンドの追加
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(migrateCmd)
 }
