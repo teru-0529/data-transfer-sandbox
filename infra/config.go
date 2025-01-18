@@ -15,9 +15,9 @@ import (
 
 // STRUCT:
 type Config struct {
-	LegacyDB DbConfig
-	workDB   DbConfig
-	DistDB   DbConfig
+	LegacyDB  DbConfig
+	workDB    DbConfig
+	productDB DbConfig
 }
 
 type DbConfig struct {
@@ -49,11 +49,11 @@ func LeadEnv() *Config {
 		log.Fatal(err)
 	}
 
-	// PROCESS: distDB
-	var distDB DbConfig
-	if err = envconfig.Process("DIST_POSTGRES", &distDB); err != nil {
+	// PROCESS: productDB
+	var productDB DbConfig
+	if err = envconfig.Process("PRODUCT_POSTGRES", &productDB); err != nil {
 		log.Fatal(err)
 	}
 
-	return &Config{LegacyDB: legacyDB, workDB: workDB, DistDB: distDB}
+	return &Config{LegacyDB: legacyDB, workDB: workDB, productDB: productDB}
 }

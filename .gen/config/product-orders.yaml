@@ -1,0 +1,13 @@
+pkgname: orders
+output: ../spec/product/orders
+wipe: true
+no-tests: true
+no-auto-timestamps: true
+psql:
+  dbname: productDB
+  host: 127.0.0.1
+  port: 6201
+  user: postgres
+  pass: password
+  sslmode: disable
+  schema: orders
