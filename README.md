@@ -2,24 +2,28 @@
 
 ## 方針
 
-* 移行元のデータを事前に入手し、ローカルで立ち上げたDBにLoadする。
-* 登録済みのデータを組み合わせて、移行先のデータにコンバートする。
-* 移行先のデータは、ローカルで立ち上げた新システムのDBに登録する。(必要に応じてダンプを取得して本番機等へ投入する)
+* legacyDB(移行元)のダンプデータを事前に入手し、ローカルで立ち上げたDBにLoadする。
+* legacyDBのデータを組み合わせて、productDB(移行先)のデータにコンバートする。
+* ローカルで立ち上げたproductDBに登録する。
 * ソースコードのversionに追随してタグ管理を行うことで、開発の進捗に合わせて必要なテーブルから順次移行する。
 * ツール実行により、実行Log、エラーデータの一覧をマークダウンで出力する。
-
-## 前提
-
-* 移行元のデータスキーマ/移行先のデータスキーマがDB定義され、postgresqlとして起動していること。
-* 移行元のDBにコンバート対象データが登録されていること。
-* 移行先のDBが空であること。
+* productDBから、local用、production用の、ダンプデータを作成する。
+  * local用・・・ローカル環境に、データ移行作業で作成したデータを投入することを想定したダンプデータ。マイグレーションによって作成される初期投入データ、およびバッチ処理で登録するDX-supportのデータについては含まない。
+  * production用・・・本番/ステージング環境(AWS)に投入するためのダンプデータ。初期投入データ、DX-supportのデータも含む。
 
 ## 使い方
 
 1. リリースサイトから最新版のツールをダウンロードする。
 2. `.env`ファイルを作成し、移行元DB/移行先DBのアクセス情報を設定する。
 
-    ``` powershell
+    ``` cmd
+    # LEGACY_DB
+    LEGACY_MARIADB_USER=maria
+    LEGACY_MARIADB_PASSWORD=password
+    LEGACY_MARIADB_HOST=localhost
+    LEGACY_MARIADB_PORT=6001
+    LEGACY_MARIADB_DB=legacyDB
+
     # SOURCE_DB
     SOURCE_POSTGRES_USER=postgres
     SOURCE_POSTGRES_PASSWORD=password
@@ -37,7 +41,7 @@
 
 3. `exe`ファイルを実行する。
 
-    ``` powershell
+    ``` cmd
     data-transfer.exe migrate
     ```
 
@@ -48,6 +52,9 @@
 * [移行元DBレイアウト](docs/source-db.md)
 
 ## 移行設計
+
+> [!NOTE]
+> TBD.
 
 ## 変更履歴
 
@@ -60,8 +67,15 @@
 * maigration実行ログの出力
 * 移行元データの件数表示
 
-> [!NOTE]
-> Useful information that users should know, even when skimming content.
+-----
+
+> [!IMPORTANT]
+> go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-mysql@latest
+
+-----
+
+> [!IMPORTANT]
+> go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
 
 -----
 
@@ -69,9 +83,6 @@
 > Helpful advice for doing things better or more easily.
 
 -----
-
-> [!IMPORTANT]
-> Key information users need to know to achieve their goal.
 
 -----
 

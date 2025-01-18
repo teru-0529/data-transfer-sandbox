@@ -11,11 +11,13 @@ import (
 	"log"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 )
 
 // STRUCT:
 type DbConnection struct {
+	LegacyDB *sql.DB
 	SourceDB *sql.DB
 	DistDB   *sql.DB
 }
@@ -28,28 +30,22 @@ func InitDB() (DbConnection, func()) {
 
 	// PROCESS: Connection作成
 	cons := DbConnection{
-		SourceDB: createConnection(config.SourceDB),
-		DistDB:   createConnection(config.DistDB),
+		LegacyDB: createCon(genMysqlDns(config.LegacyDB)),
+		SourceDB: createCon(genPsqlDns(config.SourceDB)),
+		DistDB:   createCon(genPsqlDns(config.DistDB)),
 	}
 	return cons, func() {
+		cons.LegacyDB.Close()
 		cons.SourceDB.Close()
 		cons.DistDB.Close()
 	}
 }
 
-// FUNCTION: conection
-func createConnection(config PostgresConfig) *sql.DB {
-
-	dns := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		config.User,
-		config.Password,
-		config.Host,
-		config.Port,
-		config.Db,
-	)
+// FUNCTION: connection
+func createCon(dbtype string, dns string) *sql.DB {
 
 	// PROCESS:database open
-	con, err := sql.Open("postgres", dns)
+	con, err := sql.Open(dbtype, dns)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -64,6 +60,30 @@ func createConnection(config PostgresConfig) *sql.DB {
 		log.Fatal(err)
 	}
 
-	log.Printf("db connection prepared [%s]\n", dns)
+	log.Printf("db(%s) connection prepared [%s]\n", dbtype, dns)
 	return con
+}
+
+// FUNCTION: psqlDNS
+func genPsqlDns(config DbConfig) (string, string) {
+
+	return "postgres", fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		config.User,
+		config.Password,
+		config.Host,
+		config.Port,
+		config.Db,
+	)
+}
+
+// FUNCTION: mysqlDNS
+func genMysqlDns(config DbConfig) (string, string) {
+
+	return "mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=Asia%%2FTokyo",
+		config.User,
+		config.Password,
+		config.Host,
+		config.Port,
+		config.Db,
+	)
 }

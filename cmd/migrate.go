@@ -35,7 +35,7 @@ var migrateCmd = &cobra.Command{
 		conns, dCleanUp := infra.InitDB()
 		defer dCleanUp()
 
-		service.SourceInfo(file, conns)
+		service.LegacyInfo(file, conns)
 		// if err != nil {
 		// 	return err
 		// }
