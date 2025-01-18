@@ -1,0 +1,11 @@
+pkgname: legacy
+output: ../spec/source/legacy
+wipe: true
+no-tests: true
+mysql:
+  dbname: legacyDB
+  host: 127.0.0.1
+  port: 6001
+  user: maria
+  pass: password
+  sslmode: "false"

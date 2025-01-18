@@ -11,36 +11,36 @@ import (
 	"os"
 
 	"github.com/teru-0529/data-transfer-sandbox/infra"
-	"github.com/teru-0529/data-transfer-sandbox/spec/source/source"
+	"github.com/teru-0529/data-transfer-sandbox/spec/source/legacy"
 )
 
 // STRUCT: ダミーコンテキスト
 var ctx context.Context = context.Background()
 
 // FUNCTION: 移行元情報の書き込み
-func SourceInfo(file *os.File, conns infra.DbConnection) {
+func LegacyInfo(file *os.File, conns infra.DbConnection) {
 	var num int64
 
-	file.WriteString("\n<details><summary>(open) input source db info</summary>\n\n")
-	file.WriteString("## Source DB Data Count\n\n")
+	file.WriteString("\n<details><summary>(open) input Legacy database info</summary>\n\n")
+	file.WriteString("## Legacy DB Data Count\n\n")
 
-	file.WriteString("  | # | TABLE | DATA_COUNT |\n")
+	file.WriteString("  | # | TABLE | COUNT |\n")
 	file.WriteString("  |--:|---|--:|\n")
 
 	// PROCESS: ORDERS
-	num, _ = source.Orders().Count(ctx, conns.SourceDB)
+	num, _ = legacy.Orders().Count(ctx, conns.LegacyDB)
 	writeCount(file, 1, "受注", "orders", num)
 
 	// PROCESS: ORDER_DETAILS
-	num, _ = source.OrderDetails().Count(ctx, conns.SourceDB)
+	num, _ = legacy.OrderDetails().Count(ctx, conns.LegacyDB)
 	writeCount(file, 2, "受注明細", "order_details", num)
 
 	// PROCESS: PRODUCTS
-	num, _ = source.Products().Count(ctx, conns.SourceDB)
+	num, _ = legacy.Products().Count(ctx, conns.LegacyDB)
 	writeCount(file, 3, "商品", "products", num)
 
 	// PROCESS: OPERATORS
-	num, _ = source.Operaters().Count(ctx, conns.SourceDB)
+	num, _ = legacy.Operators().Count(ctx, conns.LegacyDB)
 	writeCount(file, 4, "担当者", "operators", num)
 
 	file.WriteString("\n</details>\n")

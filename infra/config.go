@@ -15,11 +15,12 @@ import (
 
 // STRUCT:
 type Config struct {
-	SourceDB PostgresConfig
-	DistDB   PostgresConfig
+	LegacyDB DbConfig
+	SourceDB DbConfig
+	DistDB   DbConfig
 }
 
-type PostgresConfig struct {
+type DbConfig struct {
 	User     string
 	Password string
 	Host     string
@@ -36,17 +37,23 @@ func LeadEnv() *Config {
 		log.Print("loaded environment variables from .env file.")
 	}
 
+	// PROCESS: legacyDB
+	var legacyDB DbConfig
+	if err = envconfig.Process("LEGACY_MARIADB", &legacyDB); err != nil {
+		log.Fatal(err)
+	}
+
 	// PROCESS: sourceDB
-	var sourceDB PostgresConfig
+	var sourceDB DbConfig
 	if err = envconfig.Process("SOURCE_POSTGRES", &sourceDB); err != nil {
 		log.Fatal(err)
 	}
 
 	// PROCESS: distDB
-	var distDB PostgresConfig
+	var distDB DbConfig
 	if err = envconfig.Process("DIST_POSTGRES", &distDB); err != nil {
 		log.Fatal(err)
 	}
 
-	return &Config{SourceDB: sourceDB, DistDB: distDB}
+	return &Config{LegacyDB: legacyDB, SourceDB: sourceDB, DistDB: distDB}
 }
