@@ -16,7 +16,7 @@ import (
 // STRUCT:
 type Config struct {
 	LegacyDB DbConfig
-	SourceDB DbConfig
+	workDB   DbConfig
 	DistDB   DbConfig
 }
 
@@ -43,9 +43,9 @@ func LeadEnv() *Config {
 		log.Fatal(err)
 	}
 
-	// PROCESS: sourceDB
-	var sourceDB DbConfig
-	if err = envconfig.Process("SOURCE_POSTGRES", &sourceDB); err != nil {
+	// PROCESS: workDB
+	var workDB DbConfig
+	if err = envconfig.Process("WORK_POSTGRES", &workDB); err != nil {
 		log.Fatal(err)
 	}
 
@@ -55,5 +55,5 @@ func LeadEnv() *Config {
 		log.Fatal(err)
 	}
 
-	return &Config{LegacyDB: legacyDB, SourceDB: sourceDB, DistDB: distDB}
+	return &Config{LegacyDB: legacyDB, workDB: workDB, DistDB: distDB}
 }

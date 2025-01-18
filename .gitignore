@@ -2,7 +2,8 @@
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
 # Binaries for programs and plugins
-*.exe
+# *.exe
+data-transfer-sandbox.exe
 *.exe~
 *.dll
 *.so
@@ -22,5 +23,5 @@ go.work
 go.work.sum
 
 # env file
-.env
+# .env
 dist

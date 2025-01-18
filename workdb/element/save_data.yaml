@@ -1,0 +1,56 @@
+data_type: define_elements
+version: 3.0.22
+create_at: 2025-01-18T23:13:28+09:00
+elements:
+  - name_jp: 受注番号
+    name_en: orderNo
+    domain: 整数
+    reg_ex: null
+    min_digits: null
+    max_digits: null
+    min_value: null
+    max_value: null
+    example: 12
+    description: 受注番号(サロゲートキー)
+  - name_jp: 商品名
+    name_en: productName
+    domain: 文字列
+    reg_ex: null
+    min_digits: null
+    max_digits: 30
+    min_value: null
+    max_value: null
+    example: 日本刀
+    description: 商品名称
+  - name_jp: 受注明細番号
+    name_en: orderDetailNo
+    domain: 整数
+    reg_ex: null
+    min_digits: null
+    max_digits: null
+    min_value: null
+    max_value: null
+    example: 13
+    description: 受注明細番号(サロゲートキー)
+  - name_jp: 受注番号(WORK)
+    name_en: orderNoW
+    domain: NOKEY
+    reg_ex: ^RO-[0-9]{7}$
+    min_digits: 10
+    max_digits: 10
+    min_value: null
+    max_value: null
+    example: RO-0000001
+    description: 受注番号(新規採番)
+  - name_jp: 商品ID(WORK)
+    name_en: productIdW
+    domain: NOKEY
+    reg_ex: ^P[0-9]{4}$
+    min_digits: 5
+    max_digits: 5
+    min_value: null
+    max_value: null
+    example: P0001
+    description: 商品ID(新規採番)
+delive_elements: []
+segments: []
