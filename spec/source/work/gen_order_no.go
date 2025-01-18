@@ -495,11 +495,6 @@ func AddGenOrderNoHook(hookPoint boil.HookPoint, genOrderNoHook GenOrderNoHook) 
 	}
 }
 
-// OneG returns a single genOrderNo record from the query using the global executor.
-func (q genOrderNoQuery) OneG(ctx context.Context) (*GenOrderNo, error) {
-	return q.One(ctx, boil.GetContextDB())
-}
-
 // One returns a single genOrderNo record from the query.
 func (q genOrderNoQuery) One(ctx context.Context, exec boil.ContextExecutor) (*GenOrderNo, error) {
 	o := &GenOrderNo{}
@@ -519,11 +514,6 @@ func (q genOrderNoQuery) One(ctx context.Context, exec boil.ContextExecutor) (*G
 	}
 
 	return o, nil
-}
-
-// AllG returns all GenOrderNo records from the query using the global executor.
-func (q genOrderNoQuery) AllG(ctx context.Context) (GenOrderNoSlice, error) {
-	return q.All(ctx, boil.GetContextDB())
 }
 
 // All returns all GenOrderNo records from the query.
@@ -546,11 +536,6 @@ func (q genOrderNoQuery) All(ctx context.Context, exec boil.ContextExecutor) (Ge
 	return o, nil
 }
 
-// CountG returns the count of all GenOrderNo records in the query using the global executor
-func (q genOrderNoQuery) CountG(ctx context.Context) (int64, error) {
-	return q.Count(ctx, boil.GetContextDB())
-}
-
 // Count returns the count of all GenOrderNo records in the query.
 func (q genOrderNoQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
@@ -564,11 +549,6 @@ func (q genOrderNoQuery) Count(ctx context.Context, exec boil.ContextExecutor) (
 	}
 
 	return count, nil
-}
-
-// ExistsG checks if the row exists in the table using the global executor.
-func (q genOrderNoQuery) ExistsG(ctx context.Context) (bool, error) {
-	return q.Exists(ctx, boil.GetContextDB())
 }
 
 // Exists checks if the row exists in the table.
@@ -718,14 +698,6 @@ func (genOrderNoL) LoadProductIdwGenProductID(ctx context.Context, e boil.Contex
 	return nil
 }
 
-// SetProductIdwGenProductIDG of the genOrderNo to the related item.
-// Sets o.R.ProductIdwGenProductID to related.
-// Adds o to related.R.ProductIdwGenOrderNos.
-// Uses the global database handle.
-func (o *GenOrderNo) SetProductIdwGenProductIDG(ctx context.Context, insert bool, related *GenProductID) error {
-	return o.SetProductIdwGenProductID(ctx, boil.GetContextDB(), insert, related)
-}
-
 // SetProductIdwGenProductID of the genOrderNo to the related item.
 // Sets o.R.ProductIdwGenProductID to related.
 // Adds o to related.R.ProductIdwGenOrderNos.
@@ -784,11 +756,6 @@ func GenOrderNos(mods ...qm.QueryMod) genOrderNoQuery {
 	return genOrderNoQuery{q}
 }
 
-// FindGenOrderNoG retrieves a single record by ID.
-func FindGenOrderNoG(ctx context.Context, orderNow string, productIdw string, selectCols ...string) (*GenOrderNo, error) {
-	return FindGenOrderNo(ctx, boil.GetContextDB(), orderNow, productIdw, selectCols...)
-}
-
 // FindGenOrderNo retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
 func FindGenOrderNo(ctx context.Context, exec boil.ContextExecutor, orderNow string, productIdw string, selectCols ...string) (*GenOrderNo, error) {
@@ -817,11 +784,6 @@ func FindGenOrderNo(ctx context.Context, exec boil.ContextExecutor, orderNow str
 	}
 
 	return genOrderNoObj, nil
-}
-
-// InsertG a single record. See Insert for whitelist behavior description.
-func (o *GenOrderNo) InsertG(ctx context.Context, columns boil.Columns) error {
-	return o.Insert(ctx, boil.GetContextDB(), columns)
 }
 
 // Insert a single record using an executor.
@@ -903,12 +865,6 @@ func (o *GenOrderNo) Insert(ctx context.Context, exec boil.ContextExecutor, colu
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// UpdateG a single GenOrderNo record using the global executor.
-// See Update for more documentation.
-func (o *GenOrderNo) UpdateG(ctx context.Context, columns boil.Columns) (int64, error) {
-	return o.Update(ctx, boil.GetContextDB(), columns)
-}
-
 // Update uses an executor to update the GenOrderNo.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
@@ -968,11 +924,6 @@ func (o *GenOrderNo) Update(ctx context.Context, exec boil.ContextExecutor, colu
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
-// UpdateAllG updates all rows with the specified column values.
-func (q genOrderNoQuery) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return q.UpdateAll(ctx, boil.GetContextDB(), cols)
-}
-
 // UpdateAll updates all rows with the specified column values.
 func (q genOrderNoQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
@@ -988,11 +939,6 @@ func (q genOrderNoQuery) UpdateAll(ctx context.Context, exec boil.ContextExecuto
 	}
 
 	return rowsAff, nil
-}
-
-// UpdateAllG updates all rows with the specified column values.
-func (o GenOrderNoSlice) UpdateAllG(ctx context.Context, cols M) (int64, error) {
-	return o.UpdateAll(ctx, boil.GetContextDB(), cols)
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
@@ -1041,11 +987,6 @@ func (o GenOrderNoSlice) UpdateAll(ctx context.Context, exec boil.ContextExecuto
 		return 0, errors.Wrap(err, "work: unable to retrieve rows affected all in update all genOrderNo")
 	}
 	return rowsAff, nil
-}
-
-// UpsertG attempts an insert, and does an update or ignore on conflict.
-func (o *GenOrderNo) UpsertG(ctx context.Context, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
-	return o.Upsert(ctx, boil.GetContextDB(), updateOnConflict, conflictColumns, updateColumns, insertColumns, opts...)
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
@@ -1170,12 +1111,6 @@ func (o *GenOrderNo) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// DeleteG deletes a single GenOrderNo record.
-// DeleteG will match against the primary key column to find the record to delete.
-func (o *GenOrderNo) DeleteG(ctx context.Context) (int64, error) {
-	return o.Delete(ctx, boil.GetContextDB())
-}
-
 // Delete deletes a single GenOrderNo record with an executor.
 // Delete will match against the primary key column to find the record to delete.
 func (o *GenOrderNo) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
@@ -1212,10 +1147,6 @@ func (o *GenOrderNo) Delete(ctx context.Context, exec boil.ContextExecutor) (int
 	return rowsAff, nil
 }
 
-func (q genOrderNoQuery) DeleteAllG(ctx context.Context) (int64, error) {
-	return q.DeleteAll(ctx, boil.GetContextDB())
-}
-
 // DeleteAll deletes all matching rows.
 func (q genOrderNoQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if q.Query == nil {
@@ -1235,11 +1166,6 @@ func (q genOrderNoQuery) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 	}
 
 	return rowsAff, nil
-}
-
-// DeleteAllG deletes all rows in the slice.
-func (o GenOrderNoSlice) DeleteAllG(ctx context.Context) (int64, error) {
-	return o.DeleteAll(ctx, boil.GetContextDB())
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
@@ -1291,15 +1217,6 @@ func (o GenOrderNoSlice) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 	return rowsAff, nil
 }
 
-// ReloadG refetches the object from the database using the primary keys.
-func (o *GenOrderNo) ReloadG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("work: no GenOrderNo provided for reload")
-	}
-
-	return o.Reload(ctx, boil.GetContextDB())
-}
-
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *GenOrderNo) Reload(ctx context.Context, exec boil.ContextExecutor) error {
@@ -1310,16 +1227,6 @@ func (o *GenOrderNo) Reload(ctx context.Context, exec boil.ContextExecutor) erro
 
 	*o = *ret
 	return nil
-}
-
-// ReloadAllG refetches every row with matching primary key column values
-// and overwrites the original object slice with the newly updated slice.
-func (o *GenOrderNoSlice) ReloadAllG(ctx context.Context) error {
-	if o == nil {
-		return errors.New("work: empty GenOrderNoSlice provided for reload all")
-	}
-
-	return o.ReloadAll(ctx, boil.GetContextDB())
 }
 
 // ReloadAll refetches every row with matching primary key column values
@@ -1349,11 +1256,6 @@ func (o *GenOrderNoSlice) ReloadAll(ctx context.Context, exec boil.ContextExecut
 	*o = slice
 
 	return nil
-}
-
-// GenOrderNoExistsG checks if the GenOrderNo row exists.
-func GenOrderNoExistsG(ctx context.Context, orderNow string, productIdw string) (bool, error) {
-	return GenOrderNoExists(ctx, boil.GetContextDB(), orderNow, productIdw)
 }
 
 // GenOrderNoExists checks if the GenOrderNo row exists.

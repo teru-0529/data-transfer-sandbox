@@ -18,7 +18,7 @@ import (
 // STRUCT:
 type DbConnection struct {
 	LegacyDB *sql.DB
-	SourceDB *sql.DB
+	WorkDB   *sql.DB
 	DistDB   *sql.DB
 }
 
@@ -31,12 +31,12 @@ func InitDB() (DbConnection, func()) {
 	// PROCESS: Connection作成
 	cons := DbConnection{
 		LegacyDB: createCon(genMysqlDns(config.LegacyDB)),
-		SourceDB: createCon(genPsqlDns(config.SourceDB)),
+		WorkDB:   createCon(genPsqlDns(config.workDB)),
 		DistDB:   createCon(genPsqlDns(config.DistDB)),
 	}
 	return cons, func() {
 		cons.LegacyDB.Close()
-		cons.SourceDB.Close()
+		cons.WorkDB.Close()
 		cons.DistDB.Close()
 	}
 }
