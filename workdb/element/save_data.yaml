@@ -1,6 +1,6 @@
 data_type: define_elements
 version: 3.0.22
-create_at: 2025-01-19T09:42:26+09:00
+create_at: 2025-01-19T20:36:42+09:00
 elements:
   - name_jp: 受注番号
     name_en: orderNo

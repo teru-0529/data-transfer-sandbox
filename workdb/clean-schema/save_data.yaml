@@ -1,9 +1,9 @@
 data_type: define_tables
 version: 3.2.7
-create_at: 2025-01-19T09:50:02+09:00
+create_at: 2025-01-19T20:36:30+09:00
 schema:
-  name_jp: クレンジングテーブル
-  name_en: cleansing
+  name_jp: クリーンテーブル
+  name_en: clean
 tables:
   - name_jp: 担当者
     name_en: operators
