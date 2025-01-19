@@ -26,9 +26,15 @@ func Cleansing(file *os.File, conns infra.DbConnection) {
 
 	// PROCESS: 1.operators
 	num++
-	cs := cleansing.NewOperators(conns)
-	file.WriteString(resultRecord(num, cs.Result))
-	detailMessage += cs.ShowDetails()
+	cs1 := cleansing.NewOperators(conns)
+	file.WriteString(resultRecord(num, cs1.Result))
+	detailMessage += cs1.ShowDetails()
+
+	// PROCESS: 2.products
+	num++
+	cs2 := cleansing.NewProducts(conns)
+	file.WriteString(resultRecord(num, cs2.Result))
+	detailMessage += cs2.ShowDetails()
 
 	// PROCESS: 詳細メッセージ
 	if len(detailMessage) > 0 {
