@@ -67,7 +67,7 @@ func (r Result) AcceptRate() float64 {
 		rate = float64(r.AcceptCount()) / float64(r.EntryCount)
 	}
 	// 小数点2位で四捨五入
-	return math.Round(rate*10) * 10
+	return math.Round(rate*1000) / 10
 }
 
 // FUNCTION: trauncate文の生成
