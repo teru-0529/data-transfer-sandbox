@@ -1,0 +1,23 @@
+data_type: define_tables
+version: 3.2.7
+create_at: 2025-01-19T20:36:30+09:00
+schema:
+  name_jp: クリーンテーブル
+  name_en: clean
+tables:
+  - name_jp: 担当者
+    name_en: operators
+    is_master: false
+    fields:
+      - name: 担当者ID
+        nullable: false
+        default: null
+      - name: 担当者名
+        nullable: false
+        default: null
+    constraint:
+      primary_key:
+        - 担当者ID
+      uniques: []
+      foreign_keys: []
+    indexes: []

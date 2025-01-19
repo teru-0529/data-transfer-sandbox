@@ -1,6 +1,6 @@
 data_type: define_elements
 version: 3.0.22
-create_at: 2025-01-18T23:13:28+09:00
+create_at: 2025-01-19T20:36:42+09:00
 elements:
   - name_jp: 受注番号
     name_en: orderNo
@@ -52,5 +52,25 @@ elements:
     max_value: null
     example: P0001
     description: 商品ID(新規採番)
+  - name_jp: 担当者ID
+    name_en: operatorId
+    domain: NOKEY
+    reg_ex: null
+    min_digits: 5
+    max_digits: 5
+    min_value: null
+    max_value: null
+    example: U0001
+    description: 担当者のID、5文字固定
+  - name_jp: 担当者名
+    name_en: operatorName
+    domain: 文字列
+    reg_ex: null
+    min_digits: null
+    max_digits: 30
+    min_value: null
+    max_value: null
+    example: 織田信長
+    description: 担当者名
 delive_elements: []
 segments: []

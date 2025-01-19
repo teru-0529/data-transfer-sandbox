@@ -1,0 +1,13 @@
+pkgname: clean
+output: ../spec/source/clean
+wipe: true
+no-tests: true
+no-auto-timestamps: true
+psql:
+  dbname: workDB
+  host: 127.0.0.1
+  port: 6101
+  user: postgres
+  pass: password
+  sslmode: disable
+  schema: clean
