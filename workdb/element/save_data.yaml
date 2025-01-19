@@ -1,6 +1,6 @@
 data_type: define_elements
 version: 3.0.22
-create_at: 2025-01-19T20:36:42+09:00
+create_at: 2025-01-20T06:17:40+09:00
 elements:
   - name_jp: 受注番号
     name_en: orderNo
@@ -12,16 +12,6 @@ elements:
     max_value: null
     example: 12
     description: 受注番号(サロゲートキー)
-  - name_jp: 商品名
-    name_en: productName
-    domain: 文字列
-    reg_ex: null
-    min_digits: null
-    max_digits: 30
-    min_value: null
-    max_value: null
-    example: 日本刀
-    description: 商品名称
   - name_jp: 受注明細番号
     name_en: orderDetailNo
     domain: 整数
@@ -72,5 +62,29 @@ elements:
     max_value: null
     example: 織田信長
     description: 担当者名
-delive_elements: []
+  - name_jp: 商品名
+    name_en: productName
+    domain: 文字列
+    reg_ex: null
+    min_digits: null
+    max_digits: 30
+    min_value: null
+    max_value: null
+    example: 日本刀
+    description: 商品名称
+  - name_jp: 金額(マイナス無し)
+    name_en: positivePrice
+    domain: 整数
+    reg_ex: null
+    min_digits: null
+    max_digits: null
+    min_value: 0
+    max_value: null
+    example: 1000
+    description: 金額、正の数のみ許容
+delive_elements:
+  - origin: 金額(マイナス無し)
+    name_jp: 商品原価
+    name_en: costPrice
+    description: 原価
 segments: []
