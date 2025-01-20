@@ -82,7 +82,7 @@
 | 1 | 受注番号(order_no) | integer | true |  |  |
 | 2 | 受注明細番号(order_detail_no) | integer | true |  |  |
 | 3 | 商品名(product_name) | varchar(30) | true |  |  |
-| 4 | 受注数量(order_quantity) | integer | true |  | (order_quantity >= 0) |
+| 4 | 受注数量(receiving_quantity) | integer | true |  | (receiving_quantity >= 0) |
 | 5 | 出荷済フラグ(shipping_flag) | boolean | true |  |  |
 | 6 | キャンセルフラグ(cancel_flag) | boolean | true |  |  |
 | 7 | 販売単価(selling_price) | integer | true |  | (selling_price >= 0) |

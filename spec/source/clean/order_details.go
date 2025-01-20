@@ -30,7 +30,7 @@ type OrderDetail struct { // 受注番号
 	// 商品名
 	ProductName string `boil:"product_name" json:"product_name" toml:"product_name" yaml:"product_name"`
 	// 受注数量
-	OrderQuantity int `boil:"order_quantity" json:"order_quantity" toml:"order_quantity" yaml:"order_quantity"`
+	ReceivingQuantity int `boil:"receiving_quantity" json:"receiving_quantity" toml:"receiving_quantity" yaml:"receiving_quantity"`
 	// 出荷済フラグ
 	ShippingFlag bool `boil:"shipping_flag" json:"shipping_flag" toml:"shipping_flag" yaml:"shipping_flag"`
 	// キャンセルフラグ
@@ -53,59 +53,59 @@ type OrderDetail struct { // 受注番号
 }
 
 var OrderDetailColumns = struct {
-	OrderNo       string
-	OrderDetailNo string
-	ProductName   string
-	OrderQuantity string
-	ShippingFlag  string
-	CancelFlag    string
-	SellingPrice  string
-	CostPrice     string
-	CreatedAt     string
-	UpdatedAt     string
-	CreatedBy     string
-	UpdatedBy     string
+	OrderNo           string
+	OrderDetailNo     string
+	ProductName       string
+	ReceivingQuantity string
+	ShippingFlag      string
+	CancelFlag        string
+	SellingPrice      string
+	CostPrice         string
+	CreatedAt         string
+	UpdatedAt         string
+	CreatedBy         string
+	UpdatedBy         string
 }{
-	OrderNo:       "order_no",
-	OrderDetailNo: "order_detail_no",
-	ProductName:   "product_name",
-	OrderQuantity: "order_quantity",
-	ShippingFlag:  "shipping_flag",
-	CancelFlag:    "cancel_flag",
-	SellingPrice:  "selling_price",
-	CostPrice:     "cost_price",
-	CreatedAt:     "created_at",
-	UpdatedAt:     "updated_at",
-	CreatedBy:     "created_by",
-	UpdatedBy:     "updated_by",
+	OrderNo:           "order_no",
+	OrderDetailNo:     "order_detail_no",
+	ProductName:       "product_name",
+	ReceivingQuantity: "receiving_quantity",
+	ShippingFlag:      "shipping_flag",
+	CancelFlag:        "cancel_flag",
+	SellingPrice:      "selling_price",
+	CostPrice:         "cost_price",
+	CreatedAt:         "created_at",
+	UpdatedAt:         "updated_at",
+	CreatedBy:         "created_by",
+	UpdatedBy:         "updated_by",
 }
 
 var OrderDetailTableColumns = struct {
-	OrderNo       string
-	OrderDetailNo string
-	ProductName   string
-	OrderQuantity string
-	ShippingFlag  string
-	CancelFlag    string
-	SellingPrice  string
-	CostPrice     string
-	CreatedAt     string
-	UpdatedAt     string
-	CreatedBy     string
-	UpdatedBy     string
+	OrderNo           string
+	OrderDetailNo     string
+	ProductName       string
+	ReceivingQuantity string
+	ShippingFlag      string
+	CancelFlag        string
+	SellingPrice      string
+	CostPrice         string
+	CreatedAt         string
+	UpdatedAt         string
+	CreatedBy         string
+	UpdatedBy         string
 }{
-	OrderNo:       "order_details.order_no",
-	OrderDetailNo: "order_details.order_detail_no",
-	ProductName:   "order_details.product_name",
-	OrderQuantity: "order_details.order_quantity",
-	ShippingFlag:  "order_details.shipping_flag",
-	CancelFlag:    "order_details.cancel_flag",
-	SellingPrice:  "order_details.selling_price",
-	CostPrice:     "order_details.cost_price",
-	CreatedAt:     "order_details.created_at",
-	UpdatedAt:     "order_details.updated_at",
-	CreatedBy:     "order_details.created_by",
-	UpdatedBy:     "order_details.updated_by",
+	OrderNo:           "order_details.order_no",
+	OrderDetailNo:     "order_details.order_detail_no",
+	ProductName:       "order_details.product_name",
+	ReceivingQuantity: "order_details.receiving_quantity",
+	ShippingFlag:      "order_details.shipping_flag",
+	CancelFlag:        "order_details.cancel_flag",
+	SellingPrice:      "order_details.selling_price",
+	CostPrice:         "order_details.cost_price",
+	CreatedAt:         "order_details.created_at",
+	UpdatedAt:         "order_details.updated_at",
+	CreatedBy:         "order_details.created_by",
+	UpdatedBy:         "order_details.updated_by",
 }
 
 // Generated where
@@ -143,31 +143,31 @@ func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field
 func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
 var OrderDetailWhere = struct {
-	OrderNo       whereHelperint
-	OrderDetailNo whereHelperint
-	ProductName   whereHelperstring
-	OrderQuantity whereHelperint
-	ShippingFlag  whereHelperbool
-	CancelFlag    whereHelperbool
-	SellingPrice  whereHelperint
-	CostPrice     whereHelperint
-	CreatedAt     whereHelpertime_Time
-	UpdatedAt     whereHelpertime_Time
-	CreatedBy     whereHelpernull_String
-	UpdatedBy     whereHelpernull_String
+	OrderNo           whereHelperint
+	OrderDetailNo     whereHelperint
+	ProductName       whereHelperstring
+	ReceivingQuantity whereHelperint
+	ShippingFlag      whereHelperbool
+	CancelFlag        whereHelperbool
+	SellingPrice      whereHelperint
+	CostPrice         whereHelperint
+	CreatedAt         whereHelpertime_Time
+	UpdatedAt         whereHelpertime_Time
+	CreatedBy         whereHelpernull_String
+	UpdatedBy         whereHelpernull_String
 }{
-	OrderNo:       whereHelperint{field: "\"clean\".\"order_details\".\"order_no\""},
-	OrderDetailNo: whereHelperint{field: "\"clean\".\"order_details\".\"order_detail_no\""},
-	ProductName:   whereHelperstring{field: "\"clean\".\"order_details\".\"product_name\""},
-	OrderQuantity: whereHelperint{field: "\"clean\".\"order_details\".\"order_quantity\""},
-	ShippingFlag:  whereHelperbool{field: "\"clean\".\"order_details\".\"shipping_flag\""},
-	CancelFlag:    whereHelperbool{field: "\"clean\".\"order_details\".\"cancel_flag\""},
-	SellingPrice:  whereHelperint{field: "\"clean\".\"order_details\".\"selling_price\""},
-	CostPrice:     whereHelperint{field: "\"clean\".\"order_details\".\"cost_price\""},
-	CreatedAt:     whereHelpertime_Time{field: "\"clean\".\"order_details\".\"created_at\""},
-	UpdatedAt:     whereHelpertime_Time{field: "\"clean\".\"order_details\".\"updated_at\""},
-	CreatedBy:     whereHelpernull_String{field: "\"clean\".\"order_details\".\"created_by\""},
-	UpdatedBy:     whereHelpernull_String{field: "\"clean\".\"order_details\".\"updated_by\""},
+	OrderNo:           whereHelperint{field: "\"clean\".\"order_details\".\"order_no\""},
+	OrderDetailNo:     whereHelperint{field: "\"clean\".\"order_details\".\"order_detail_no\""},
+	ProductName:       whereHelperstring{field: "\"clean\".\"order_details\".\"product_name\""},
+	ReceivingQuantity: whereHelperint{field: "\"clean\".\"order_details\".\"receiving_quantity\""},
+	ShippingFlag:      whereHelperbool{field: "\"clean\".\"order_details\".\"shipping_flag\""},
+	CancelFlag:        whereHelperbool{field: "\"clean\".\"order_details\".\"cancel_flag\""},
+	SellingPrice:      whereHelperint{field: "\"clean\".\"order_details\".\"selling_price\""},
+	CostPrice:         whereHelperint{field: "\"clean\".\"order_details\".\"cost_price\""},
+	CreatedAt:         whereHelpertime_Time{field: "\"clean\".\"order_details\".\"created_at\""},
+	UpdatedAt:         whereHelpertime_Time{field: "\"clean\".\"order_details\".\"updated_at\""},
+	CreatedBy:         whereHelpernull_String{field: "\"clean\".\"order_details\".\"created_by\""},
+	UpdatedBy:         whereHelpernull_String{field: "\"clean\".\"order_details\".\"updated_by\""},
 }
 
 // OrderDetailRels is where relationship names are stored.
@@ -208,8 +208,8 @@ func (r *orderDetailR) GetProductNameProduct() *Product {
 type orderDetailL struct{}
 
 var (
-	orderDetailAllColumns            = []string{"order_no", "order_detail_no", "product_name", "order_quantity", "shipping_flag", "cancel_flag", "selling_price", "cost_price", "created_at", "updated_at", "created_by", "updated_by"}
-	orderDetailColumnsWithoutDefault = []string{"order_no", "order_detail_no", "product_name", "order_quantity", "shipping_flag", "cancel_flag", "selling_price", "cost_price"}
+	orderDetailAllColumns            = []string{"order_no", "order_detail_no", "product_name", "receiving_quantity", "shipping_flag", "cancel_flag", "selling_price", "cost_price", "created_at", "updated_at", "created_by", "updated_by"}
+	orderDetailColumnsWithoutDefault = []string{"order_no", "order_detail_no", "product_name", "receiving_quantity", "shipping_flag", "cancel_flag", "selling_price", "cost_price"}
 	orderDetailColumnsWithDefault    = []string{"created_at", "updated_at", "created_by", "updated_by"}
 	orderDetailPrimaryKeyColumns     = []string{"order_no", "order_detail_no"}
 	orderDetailGeneratedColumns      = []string{}

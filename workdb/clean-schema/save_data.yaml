@@ -1,6 +1,6 @@
 data_type: define_tables
 version: 3.2.7
-create_at: 2025-01-20T21:01:34+09:00
+create_at: 2025-01-20T21:22:06+09:00
 schema:
   name_jp: クリーンテーブル
   name_en: clean

@@ -8,7 +8,7 @@ CREATE TABLE clean.order_details (
   order_no integer NOT NULL,
   order_detail_no integer NOT NULL,
   product_name varchar(30) NOT NULL,
-  order_quantity integer NOT NULL check (order_quantity >= 0),
+  receiving_quantity integer NOT NULL check (receiving_quantity >= 0),
   shipping_flag boolean NOT NULL,
   cancel_flag boolean NOT NULL,
   selling_price integer NOT NULL check (selling_price >= 0),
@@ -26,7 +26,7 @@ COMMENT ON TABLE clean.order_details IS '受注明細';
 COMMENT ON COLUMN clean.order_details.order_no IS '受注番号';
 COMMENT ON COLUMN clean.order_details.order_detail_no IS '受注明細番号';
 COMMENT ON COLUMN clean.order_details.product_name IS '商品名';
-COMMENT ON COLUMN clean.order_details.order_quantity IS '受注数量';
+COMMENT ON COLUMN clean.order_details.receiving_quantity IS '受注数量';
 COMMENT ON COLUMN clean.order_details.shipping_flag IS '出荷済フラグ';
 COMMENT ON COLUMN clean.order_details.cancel_flag IS 'キャンセルフラグ';
 COMMENT ON COLUMN clean.order_details.selling_price IS '販売単価';
