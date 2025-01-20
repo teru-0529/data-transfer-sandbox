@@ -190,15 +190,26 @@ var OperatorWhere = struct {
 
 // OperatorRels is where relationship names are stored.
 var OperatorRels = struct {
-}{}
+	OrderPicOrders string
+}{
+	OrderPicOrders: "OrderPicOrders",
+}
 
 // operatorR is where relationships are stored.
 type operatorR struct {
+	OrderPicOrders OrderSlice `boil:"OrderPicOrders" json:"OrderPicOrders" toml:"OrderPicOrders" yaml:"OrderPicOrders"`
 }
 
 // NewStruct creates a new relationship struct
 func (*operatorR) NewStruct() *operatorR {
 	return &operatorR{}
+}
+
+func (r *operatorR) GetOrderPicOrders() OrderSlice {
+	if r == nil {
+		return nil
+	}
+	return r.OrderPicOrders
 }
 
 // operatorL is where Load methods for each relationship are stored.
@@ -515,6 +526,186 @@ func (q operatorQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (b
 	}
 
 	return count > 0, nil
+}
+
+// OrderPicOrders retrieves all the order's Orders with an executor via order_pic column.
+func (o *Operator) OrderPicOrders(mods ...qm.QueryMod) orderQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"clean\".\"orders\".\"order_pic\"=?", o.OperatorName),
+	)
+
+	return Orders(queryMods...)
+}
+
+// LoadOrderPicOrders allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (operatorL) LoadOrderPicOrders(ctx context.Context, e boil.ContextExecutor, singular bool, maybeOperator interface{}, mods queries.Applicator) error {
+	var slice []*Operator
+	var object *Operator
+
+	if singular {
+		var ok bool
+		object, ok = maybeOperator.(*Operator)
+		if !ok {
+			object = new(Operator)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeOperator)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeOperator))
+			}
+		}
+	} else {
+		s, ok := maybeOperator.(*[]*Operator)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeOperator)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeOperator))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &operatorR{}
+		}
+		args[object.OperatorName] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &operatorR{}
+			}
+			args[obj.OperatorName] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`clean.orders`),
+		qm.WhereIn(`clean.orders.order_pic in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load orders")
+	}
+
+	var resultSlice []*Order
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice orders")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on orders")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for orders")
+	}
+
+	if len(orderAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.OrderPicOrders = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &orderR{}
+			}
+			foreign.R.OrderPicOperator = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.OperatorName == foreign.OrderPic {
+				local.R.OrderPicOrders = append(local.R.OrderPicOrders, foreign)
+				if foreign.R == nil {
+					foreign.R = &orderR{}
+				}
+				foreign.R.OrderPicOperator = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// AddOrderPicOrders adds the given related objects to the existing relationships
+// of the operator, optionally inserting them as new records.
+// Appends related to o.R.OrderPicOrders.
+// Sets related.R.OrderPicOperator appropriately.
+func (o *Operator) AddOrderPicOrders(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Order) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.OrderPic = o.OperatorName
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"clean\".\"orders\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"order_pic"}),
+				strmangle.WhereClause("\"", "\"", 2, orderPrimaryKeyColumns),
+			)
+			values := []interface{}{o.OperatorName, rel.OrderNo}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.OrderPic = o.OperatorName
+		}
+	}
+
+	if o.R == nil {
+		o.R = &operatorR{
+			OrderPicOrders: related,
+		}
+	} else {
+		o.R.OrderPicOrders = append(o.R.OrderPicOrders, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &orderR{
+				OrderPicOperator: o,
+			}
+		} else {
+			rel.R.OrderPicOperator = o
+		}
+	}
+	return nil
 }
 
 // Operators retrieves all the records using an executor.

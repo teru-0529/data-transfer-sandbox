@@ -17,26 +17,26 @@ import (
 )
 
 // STRUCT:
-type ProductsClensing struct {
+type OrdersClensing struct {
 	conns   infra.DbConnection
 	Result  Result
-	Details []*ProductPiece
+	Details []*OrderPiece
 }
 
-type ProductPiece struct {
-	ProductName string
-	status      Status
-	approved    bool
-	message     string
+type OrderPiece struct {
+	OrderNo  int
+	status   Status
+	approved bool
+	message  string
 }
 
 // FUNCTION:
-func NewProducts(conns infra.DbConnection) ProductsClensing {
+func NewOrders(conns infra.DbConnection) OrdersClensing {
 	s := time.Now()
 
-	cs := ProductsClensing{conns: conns, Result: Result{
-		TableNameJp: "商品",
-		TableNameEn: "products",
+	cs := OrdersClensing{conns: conns, Result: Result{
+		TableNameJp: "受注",
+		TableNameEn: "orders",
 	}}
 
 	// PROCESS: 入力データ量
@@ -58,8 +58,8 @@ func NewProducts(conns infra.DbConnection) ProductsClensing {
 }
 
 // FUNCTION: 入力データ量
-func (cs *ProductsClensing) setEntryCount() {
-	num, err := legacy.Products().Count(ctx, cs.conns.LegacyDB)
+func (cs *OrdersClensing) setEntryCount() {
+	num, err := legacy.Orders().Count(ctx, cs.conns.LegacyDB)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -67,11 +67,11 @@ func (cs *ProductsClensing) setEntryCount() {
 }
 
 // FUNCTION: データ繰り返し取得(1000件単位で分割)
-func (cs *ProductsClensing) iterate() {
+func (cs *OrdersClensing) iterate() {
 
 	// PROCESS: 1000件単位でのSQL実行に分割する
 	for section := 0; section < cs.Result.sectionCount(); section++ {
-		records, err := legacy.Products(qm.Limit(LIMIT), qm.Offset(section*LIMIT)).All(ctx, cs.conns.LegacyDB)
+		records, err := legacy.Orders(qm.Limit(LIMIT), qm.Offset(section*LIMIT)).All(ctx, cs.conns.LegacyDB)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -86,43 +86,66 @@ func (cs *ProductsClensing) iterate() {
 }
 
 // FUNCTION: レコード毎のチェック
-func (cs *ProductsClensing) checkAndClensing(record *legacy.Product) *ProductPiece {
-	piece := ProductPiece{
-		ProductName: record.ProductName,
-		status:      NO_CHANGE,
+func (cs *OrdersClensing) checkAndClensing(record *legacy.Order) *OrderPiece {
+	piece := OrderPiece{
+		OrderNo: record.OrderNo,
+		status:  NO_CHANGE,
 	}
 
-	// PROCESS: cost_priceが負の数字の場合は、0にクレンジングする。
-	costPrice := record.CostPrice
+	// PROCESS: order_dateが日付のフォーマットに合致しない場合は、"20250101"にクレンジングする。
+	orderDate := record.OrderDate
+	var defOrderDate = "20250101"
 
-	if costPrice < 0 {
-		record.CostPrice = 0
+	_, err := time.Parse(DATE_LAYOUT, orderDate)
+	if err != nil {
+		record.OrderDate = defOrderDate
 
 		piece.status = MODIFY
-		piece.approved = false
+		piece.approved = true
 		if len(piece.message) != 0 {
 			piece.message += "<BR>"
 		}
-		piece.message += fmt.Sprintf("● cost_price(商品原価) が負の数。`%d` → `0`(固定値) にクレンジング。", costPrice)
+		piece.message += fmt.Sprintf("● order_date(受注日付) が日付フォーマットではない。`%s` → `%s`(固定値) にクレンジング。", orderDate, defOrderDate)
+	}
+
+	// PROCESS: order_picが[担当者]に存在しない場合は、"N/A"にクレンジングする。
+	orderPic := record.OrderPic
+	var defOrderPic = "N/A"
+
+	// PK検索ではないので、legacy.OperatorExists()は使えない。
+	ok1, _ := legacy.Operators(legacy.OperatorWhere.OperatorName.EQ(orderPic)).Exists(ctx, cs.conns.LegacyDB)
+	if !ok1 {
+		record.OrderPic = defOrderPic
+
+		piece.status = MODIFY
+		piece.approved = true
+		if len(piece.message) != 0 {
+			piece.message += "<BR>"
+		}
+		piece.message += fmt.Sprintf("● order_pic(受注担当者名) が[担当者]に存在しない。`%s` → `%s`(固定値) にクレンジング。", orderPic, defOrderPic)
 	}
 
 	return &piece
 }
 
 // FUNCTION: レコード毎のクレンジング後データ登録
-func (cs *ProductsClensing) saveData(record *legacy.Product, piece *ProductPiece) {
+func (cs *OrdersClensing) saveData(record *legacy.Order, piece *OrderPiece) {
 	// PROCESS: REMOVEDの場合はDBに登録しない
 	if piece.status == REMOVE {
 		cs.setResult(piece)
 		return
 	}
 
+	orderDate, _ := time.Parse(DATE_LAYOUT, record.OrderDate)
+
 	// PROCESS: データ登録
-	rec := clean.Product{
-		ProductName: record.ProductName,
-		CostPrice:   record.CostPrice,
-		CreatedBy:   OPERATION_USER,
-		UpdatedBy:   OPERATION_USER,
+	rec := clean.Order{
+		OrderNo:      record.OrderNo,
+		OrderDate:    orderDate,
+		OrderPic:     record.OrderPic,
+		CustomerName: record.CustomerName,
+		CreatedBy:    OPERATION_USER,
+		UpdatedBy:    OPERATION_USER,
 	}
 	err := rec.Insert(ctx, cs.conns.WorkDB, boil.Infer())
 
@@ -139,7 +162,7 @@ func (cs *ProductsClensing) saveData(record *legacy.Product, piece *ProductPiece
 }
 
 // FUNCTION: クレンジング結果の登録
-func (cs *ProductsClensing) setResult(piece *ProductPiece) {
+func (cs *OrdersClensing) setResult(piece *OrderPiece) {
 	switch piece.status {
 	case NO_CHANGE:
 		cs.Result.UnchangeCount++
@@ -153,7 +176,7 @@ func (cs *ProductsClensing) setResult(piece *ProductPiece) {
 }
 
 // FUNCTION: 詳細情報の出力
-func (cs *ProductsClensing) ShowDetails() string {
+func (cs *OrdersClensing) ShowDetails() string {
 	if len(cs.Details) == 0 {
 		return ""
 	}
@@ -161,12 +184,12 @@ func (cs *ProductsClensing) ShowDetails() string {
 	var msg string
 	msg += fmt.Sprintf("\n### %s\n\n", cs.Result.TableName())
 
-	msg += "  | # | product_name | … | RESULT | APPROVED | MESSAGE |\n"
-	msg += "  |--:|---|---|:-:|:-:|---|\n"
+	msg += "  | # | order_no | … | RESULT | APPROVED | MESSAGE |\n"
+	msg += "  |--:|--:|---|:-:|:-:|---|\n"
 	for i, piece := range cs.Details {
-		msg += fmt.Sprintf("  | %d | %s | … | %s | %s | %s |\n",
+		msg += fmt.Sprintf("  | %d | %d | … | %s | %s | %s |\n",
 			i+1,
-			piece.ProductName,
+			piece.OrderNo,
 			piece.status,
 			approveStr(piece.approved),
 			piece.message,

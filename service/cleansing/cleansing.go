@@ -16,6 +16,9 @@ import (
 // STRUCT: 検索時最大件数
 const LIMIT int = 1000
 
+// STRUCT: 日付文字列フォーマット
+const DATE_LAYOUT string = "20060102"
+
 // STRUCT: OPERATION-USER
 var OPERATION_USER = null.StringFrom("DATA_TRANSFER")
 
@@ -37,6 +40,7 @@ type Result struct {
 	UnchangeCount int
 	ModifyCount   int
 	RemoveCount   int
+	duration      float64
 }
 
 // FUNCTION:
@@ -72,7 +76,7 @@ func (r Result) AcceptRate() float64 {
 
 // FUNCTION: trauncate文の生成
 func (r Result) truncateSql() string {
-	return fmt.Sprintf("truncate clean.%s;", r.TableNameEn)
+	return fmt.Sprintf("truncate clean.%s CASCADE;", r.TableNameEn)
 }
 
 // FUNCTION: Limit単位の呼び出し回数
@@ -84,4 +88,10 @@ func (r Result) sectionCount() int {
 	// EntryCount=5 ・・・(5 -1 +5) / 5 = 9 / 5 = 1
 	// EntryCount=6 ・・・(6 -1 +5) / 5 = 10 / 5 = 2
 	return (r.EntryCount - 1 + LIMIT) / LIMIT
+}
+
+// FUNCTION: trauncate文の生成
+func (r Result) Elapsed() float64 {
+	// 小数点3位で四捨五入
+	return math.Round(r.duration*100) / 100
 }

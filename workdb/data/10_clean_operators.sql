@@ -29,6 +29,11 @@ ALTER TABLE clean.operators ADD PRIMARY KEY (
   operator_id
 );
 
+-- Set Unique Constraint
+ALTER TABLE clean.operators ADD CONSTRAINT operators_unique_1 UNIQUE (
+  operator_name
+);
+
 -- Create 'set_update_at' Trigger
 CREATE TRIGGER set_updated_at
   BEFORE UPDATE
