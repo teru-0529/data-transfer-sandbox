@@ -21,6 +21,7 @@ type OperatorClensing struct {
 	conns   infra.DbConnection
 	Result  Result
 	Details []OperatorPiece
+	keys    map[string]struct{}
 }
 
 type OperatorPiece struct {
@@ -34,10 +35,14 @@ type OperatorPiece struct {
 func NewOperators(conns infra.DbConnection) OperatorClensing {
 	s := time.Now()
 
-	cs := OperatorClensing{conns: conns, Result: Result{
-		TableNameJp: "担当者",
-		TableNameEn: "operators",
-	}}
+	cs := OperatorClensing{
+		conns: conns,
+		Result: Result{
+			TableNameJp: "担当者",
+			TableNameEn: "operators",
+		},
+		keys: map[string]struct{}{},
+	}
 
 	// PROCESS: 入力データ量
 	cs.setEntryCount()
@@ -85,7 +90,20 @@ func (cs *OperatorClensing) iterate() {
 
 // FUNCTION: レコード毎のチェック
 func (cs *OperatorClensing) checkAndClensing(record *legacy.Operator) OperatorPiece {
-	_ = record
+
+	_, ok := cs.keys[record.OperatorName]
+
+	// PROCESS: ユニークキーとして担当者名を登録
+	cs.keys[record.OperatorName] = struct{}{}
+	// PROCESS: すでに担当者名が存在する場合(ユニーク制約)、データ除外
+	if ok {
+		return OperatorPiece{
+			OperatorId: record.OperatorID,
+			status:     REMOVE,
+			approved:   true,
+			message:    fmt.Sprintf("operator_name(担当者名) がユニーク制約に違反。移行対象から除外 `%s` 。", record.OperatorName),
+		}
+	}
 	return OperatorPiece{status: NO_CHANGE}
 }
 

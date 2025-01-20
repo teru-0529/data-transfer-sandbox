@@ -87,26 +87,16 @@ func (cs *ProductsClensing) iterate() {
 func (cs *ProductsClensing) checkAndClensing(record *legacy.Product) ProductPiece {
 	costPrice := record.CostPrice
 
-	// // PROCESS: cost_priceが負の数字の場合は、移行対象外とする。
+	// PROCESS: cost_priceが負の数字の場合は、0にクレンジングする。
 	if costPrice < 0 {
+		record.CostPrice = 0
 		return ProductPiece{
 			ProductName: record.ProductName,
-			status:      REMOVE,
-			approved:    true,
-			message:     fmt.Sprintf("cost_price(商品原価)が0未満(`%d`)のため、移行対象外", costPrice),
+			status:      MODIFY,
+			approved:    false,
+			message:     fmt.Sprintf("cost_price(商品原価) が負の数。`%d` → `0`(固定値) にクレンジング。", costPrice),
 		}
 	}
-
-	// // PROCESS: cost_priceが負の数字の場合は、0にクレンジングする。
-	// if costPrice < 0 {
-	// 	record.CostPrice = 0
-	// 	return ProductPiece{
-	// 		ProductName: record.ProductName,
-	// 		status:      MODIFY,
-	// 		approved:    false,
-	// 		message:     fmt.Sprintf("cost_price(商品原価)を`%d`→`0`にクレンジング", costPrice),
-	// 	}
-	// }
 
 	return ProductPiece{status: NO_CHANGE}
 }

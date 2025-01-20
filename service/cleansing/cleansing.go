@@ -72,7 +72,7 @@ func (r Result) AcceptRate() float64 {
 
 // FUNCTION: trauncate文の生成
 func (r Result) truncateSql() string {
-	return fmt.Sprintf("truncate clean.%s;", r.TableNameEn)
+	return fmt.Sprintf("truncate clean.%s CASCADE;", r.TableNameEn)
 }
 
 // FUNCTION: Limit単位の呼び出し回数
