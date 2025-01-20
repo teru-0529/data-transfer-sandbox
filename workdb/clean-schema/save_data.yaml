@@ -1,6 +1,6 @@
 data_type: define_tables
 version: 3.2.7
-create_at: 2025-01-20T06:17:31+09:00
+create_at: 2025-01-20T19:15:01+09:00
 schema:
   name_jp: クリーンテーブル
   name_en: clean
@@ -18,7 +18,10 @@ tables:
     constraint:
       primary_key:
         - 担当者ID
-      uniques: []
+      uniques:
+        - name: operators_unique_1
+          fields:
+            - 担当者名
       foreign_keys: []
     indexes: []
   - name_jp: 商品
@@ -36,4 +39,82 @@ tables:
         - 商品名
       uniques: []
       foreign_keys: []
+    indexes: []
+  - name_jp: 受注
+    name_en: order
+    is_master: false
+    fields:
+      - name: 受注番号
+        nullable: false
+        default: null
+      - name: 受注日付
+        nullable: false
+        default: null
+      - name: 受注担当者名
+        nullable: false
+        default: null
+      - name: 得意先名称
+        nullable: false
+        default: null
+    constraint:
+      primary_key:
+        - 受注番号
+      uniques: []
+      foreign_keys:
+        - name: order_foreignKey_1
+          reference_table: 担当者
+          delete_option: null
+          update_option: null
+          fields:
+            - this: 受注担当者名
+              ref: 担当者名
+    indexes: []
+  - name_jp: 受注明細
+    name_en: order_detail
+    is_master: false
+    fields:
+      - name: 受注番号
+        nullable: false
+        default: null
+      - name: 受注明細番号
+        nullable: false
+        default: null
+      - name: 商品名
+        nullable: false
+        default: null
+      - name: 受注数量
+        nullable: false
+        default: null
+      - name: 出荷済フラグ
+        nullable: false
+        default: null
+      - name: キャンセルフラグ
+        nullable: false
+        default: null
+      - name: 販売単価
+        nullable: false
+        default: null
+      - name: 商品原価
+        nullable: false
+        default: null
+    constraint:
+      primary_key:
+        - 受注番号
+        - 受注明細番号
+      uniques: []
+      foreign_keys:
+        - name: order_detail_foreignKey_1
+          reference_table: 受注
+          delete_option: CASCADE
+          update_option: CASCADE
+          fields:
+            - this: 受注番号
+              ref: 受注番号
+        - name: order_detail_foreignKey_2
+          reference_table: 商品
+          delete_option: null
+          update_option: null
+          fields:
+            - this: 商品名
+              ref: 商品名
     indexes: []

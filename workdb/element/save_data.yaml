@@ -1,27 +1,7 @@
 data_type: define_elements
 version: 3.0.22
-create_at: 2025-01-20T06:17:40+09:00
+create_at: 2025-01-20T19:14:53+09:00
 elements:
-  - name_jp: 受注番号
-    name_en: orderNo
-    domain: 整数
-    reg_ex: null
-    min_digits: null
-    max_digits: null
-    min_value: null
-    max_value: null
-    example: 12
-    description: 受注番号(サロゲートキー)
-  - name_jp: 受注明細番号
-    name_en: orderDetailNo
-    domain: 整数
-    reg_ex: null
-    min_digits: null
-    max_digits: null
-    min_value: null
-    max_value: null
-    example: 13
-    description: 受注明細番号(サロゲートキー)
   - name_jp: 受注番号(WORK)
     name_en: orderNoW
     domain: NOKEY
@@ -82,9 +62,95 @@ elements:
     max_value: null
     example: 1000
     description: 金額、正の数のみ許容
+  - name_jp: 受注番号
+    name_en: orderNo
+    domain: 整数
+    reg_ex: null
+    min_digits: null
+    max_digits: null
+    min_value: null
+    max_value: null
+    example: 12
+    description: 受注番号(サロゲートキー)
+  - name_jp: 日付
+    name_en: sysDate
+    domain: 日付
+    reg_ex: null
+    min_digits: null
+    max_digits: null
+    min_value: null
+    max_value: null
+    example: "2025-01-15"
+    description: 日付
+  - name_jp: 得意先名称
+    name_en: customerName
+    domain: 文字列
+    reg_ex: null
+    min_digits: null
+    max_digits: 50
+    min_value: null
+    max_value: null
+    example: 徳川物産株式会社
+    description: 得意先名
+  - name_jp: 受注明細番号
+    name_en: orderDetailNo
+    domain: 整数
+    reg_ex: null
+    min_digits: null
+    max_digits: null
+    min_value: null
+    max_value: null
+    example: 13
+    description: 受注明細番号(サロゲートキー)
+  - name_jp: 数量
+    name_en: quantity
+    domain: 整数
+    reg_ex: null
+    min_digits: null
+    max_digits: null
+    min_value: 0
+    max_value: null
+    example: 5
+    description: 数量
+  - name_jp: 出荷済フラグ
+    name_en: shippingFlag
+    domain: 可否/フラグ
+    reg_ex: null
+    min_digits: null
+    max_digits: null
+    min_value: null
+    max_value: null
+    example: true
+    description: 出荷済の場合true
+  - name_jp: キャンセルフラグ
+    name_en: cancelFlag
+    domain: 可否/フラグ
+    reg_ex: null
+    min_digits: null
+    max_digits: null
+    min_value: null
+    max_value: null
+    example: true
+    description: キャンセルの場合true
 delive_elements:
   - origin: 金額(マイナス無し)
     name_jp: 商品原価
     name_en: costPrice
     description: 原価
+  - origin: 日付
+    name_jp: 受注日付
+    name_en: orderDate
+    description: 受注日付
+  - origin: 担当者名
+    name_jp: 受注担当者名
+    name_en: orderPic
+    description: 受注担当者名
+  - origin: 数量
+    name_jp: 受注数量
+    name_en: orderQuantity
+    description: 受注数量
+  - origin: 金額(マイナス無し)
+    name_jp: 販売単価
+    name_en: sellingPrice
+    description: 売価
 segments: []

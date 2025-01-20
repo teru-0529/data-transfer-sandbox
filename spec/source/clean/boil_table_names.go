@@ -4,9 +4,13 @@
 package clean
 
 var TableNames = struct {
-	Operators string
-	Products  string
+	Operators   string
+	Order       string
+	OrderDetail string
+	Products    string
 }{
-	Operators: "operators",
-	Products:  "products",
+	Operators:   "operators",
+	Order:       "order",
+	OrderDetail: "order_detail",
+	Products:    "products",
 }
