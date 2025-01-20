@@ -536,7 +536,7 @@ func (o *Operator) OrderPicOrders(mods ...qm.QueryMod) orderQuery {
 	}
 
 	queryMods = append(queryMods,
-		qm.Where("\"clean\".\"order\".\"order_pic\"=?", o.OperatorName),
+		qm.Where("\"clean\".\"orders\".\"order_pic\"=?", o.OperatorName),
 	)
 
 	return Orders(queryMods...)
@@ -597,8 +597,8 @@ func (operatorL) LoadOrderPicOrders(ctx context.Context, e boil.ContextExecutor,
 	}
 
 	query := NewQuery(
-		qm.From(`clean.order`),
-		qm.WhereIn(`clean.order.order_pic in ?`, argsSlice...),
+		qm.From(`clean.orders`),
+		qm.WhereIn(`clean.orders.order_pic in ?`, argsSlice...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -606,19 +606,19 @@ func (operatorL) LoadOrderPicOrders(ctx context.Context, e boil.ContextExecutor,
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load order")
+		return errors.Wrap(err, "failed to eager load orders")
 	}
 
 	var resultSlice []*Order
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice order")
+		return errors.Wrap(err, "failed to bind eager loaded slice orders")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on order")
+		return errors.Wrap(err, "failed to close results in eager load on orders")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for order")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for orders")
 	}
 
 	if len(orderAfterSelectHooks) != 0 {
@@ -669,7 +669,7 @@ func (o *Operator) AddOrderPicOrders(ctx context.Context, exec boil.ContextExecu
 			}
 		} else {
 			updateQuery := fmt.Sprintf(
-				"UPDATE \"clean\".\"order\" SET %s WHERE %s",
+				"UPDATE \"clean\".\"orders\" SET %s WHERE %s",
 				strmangle.SetParamNames("\"", "\"", 1, []string{"order_pic"}),
 				strmangle.WhereClause("\"", "\"", 2, orderPrimaryKeyColumns),
 			)

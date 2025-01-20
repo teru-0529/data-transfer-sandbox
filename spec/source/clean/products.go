@@ -438,7 +438,7 @@ func (o *Product) ProductNameOrderDetails(mods ...qm.QueryMod) orderDetailQuery 
 	}
 
 	queryMods = append(queryMods,
-		qm.Where("\"clean\".\"order_detail\".\"product_name\"=?", o.ProductName),
+		qm.Where("\"clean\".\"order_details\".\"product_name\"=?", o.ProductName),
 	)
 
 	return OrderDetails(queryMods...)
@@ -499,8 +499,8 @@ func (productL) LoadProductNameOrderDetails(ctx context.Context, e boil.ContextE
 	}
 
 	query := NewQuery(
-		qm.From(`clean.order_detail`),
-		qm.WhereIn(`clean.order_detail.product_name in ?`, argsSlice...),
+		qm.From(`clean.order_details`),
+		qm.WhereIn(`clean.order_details.product_name in ?`, argsSlice...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -508,19 +508,19 @@ func (productL) LoadProductNameOrderDetails(ctx context.Context, e boil.ContextE
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load order_detail")
+		return errors.Wrap(err, "failed to eager load order_details")
 	}
 
 	var resultSlice []*OrderDetail
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice order_detail")
+		return errors.Wrap(err, "failed to bind eager loaded slice order_details")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on order_detail")
+		return errors.Wrap(err, "failed to close results in eager load on order_details")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for order_detail")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for order_details")
 	}
 
 	if len(orderDetailAfterSelectHooks) != 0 {
@@ -571,7 +571,7 @@ func (o *Product) AddProductNameOrderDetails(ctx context.Context, exec boil.Cont
 			}
 		} else {
 			updateQuery := fmt.Sprintf(
-				"UPDATE \"clean\".\"order_detail\" SET %s WHERE %s",
+				"UPDATE \"clean\".\"order_details\" SET %s WHERE %s",
 				strmangle.SetParamNames("\"", "\"", 1, []string{"product_name"}),
 				strmangle.WhereClause("\"", "\"", 2, orderDetailPrimaryKeyColumns),
 			)

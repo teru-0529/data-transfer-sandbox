@@ -94,21 +94,44 @@ var OrderDetailTableColumns = struct {
 	CreatedBy     string
 	UpdatedBy     string
 }{
-	OrderNo:       "order_detail.order_no",
-	OrderDetailNo: "order_detail.order_detail_no",
-	ProductName:   "order_detail.product_name",
-	OrderQuantity: "order_detail.order_quantity",
-	ShippingFlag:  "order_detail.shipping_flag",
-	CancelFlag:    "order_detail.cancel_flag",
-	SellingPrice:  "order_detail.selling_price",
-	CostPrice:     "order_detail.cost_price",
-	CreatedAt:     "order_detail.created_at",
-	UpdatedAt:     "order_detail.updated_at",
-	CreatedBy:     "order_detail.created_by",
-	UpdatedBy:     "order_detail.updated_by",
+	OrderNo:       "order_details.order_no",
+	OrderDetailNo: "order_details.order_detail_no",
+	ProductName:   "order_details.product_name",
+	OrderQuantity: "order_details.order_quantity",
+	ShippingFlag:  "order_details.shipping_flag",
+	CancelFlag:    "order_details.cancel_flag",
+	SellingPrice:  "order_details.selling_price",
+	CostPrice:     "order_details.cost_price",
+	CreatedAt:     "order_details.created_at",
+	UpdatedAt:     "order_details.updated_at",
+	CreatedBy:     "order_details.created_by",
+	UpdatedBy:     "order_details.updated_by",
 }
 
 // Generated where
+
+type whereHelperint struct{ field string }
+
+func (w whereHelperint) EQ(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint) NEQ(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint) LT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint) LTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint) GT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint) GTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperint) NIN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
 
 type whereHelperbool struct{ field string }
 
@@ -133,18 +156,18 @@ var OrderDetailWhere = struct {
 	CreatedBy     whereHelpernull_String
 	UpdatedBy     whereHelpernull_String
 }{
-	OrderNo:       whereHelperint{field: "\"clean\".\"order_detail\".\"order_no\""},
-	OrderDetailNo: whereHelperint{field: "\"clean\".\"order_detail\".\"order_detail_no\""},
-	ProductName:   whereHelperstring{field: "\"clean\".\"order_detail\".\"product_name\""},
-	OrderQuantity: whereHelperint{field: "\"clean\".\"order_detail\".\"order_quantity\""},
-	ShippingFlag:  whereHelperbool{field: "\"clean\".\"order_detail\".\"shipping_flag\""},
-	CancelFlag:    whereHelperbool{field: "\"clean\".\"order_detail\".\"cancel_flag\""},
-	SellingPrice:  whereHelperint{field: "\"clean\".\"order_detail\".\"selling_price\""},
-	CostPrice:     whereHelperint{field: "\"clean\".\"order_detail\".\"cost_price\""},
-	CreatedAt:     whereHelpertime_Time{field: "\"clean\".\"order_detail\".\"created_at\""},
-	UpdatedAt:     whereHelpertime_Time{field: "\"clean\".\"order_detail\".\"updated_at\""},
-	CreatedBy:     whereHelpernull_String{field: "\"clean\".\"order_detail\".\"created_by\""},
-	UpdatedBy:     whereHelpernull_String{field: "\"clean\".\"order_detail\".\"updated_by\""},
+	OrderNo:       whereHelperint{field: "\"clean\".\"order_details\".\"order_no\""},
+	OrderDetailNo: whereHelperint{field: "\"clean\".\"order_details\".\"order_detail_no\""},
+	ProductName:   whereHelperstring{field: "\"clean\".\"order_details\".\"product_name\""},
+	OrderQuantity: whereHelperint{field: "\"clean\".\"order_details\".\"order_quantity\""},
+	ShippingFlag:  whereHelperbool{field: "\"clean\".\"order_details\".\"shipping_flag\""},
+	CancelFlag:    whereHelperbool{field: "\"clean\".\"order_details\".\"cancel_flag\""},
+	SellingPrice:  whereHelperint{field: "\"clean\".\"order_details\".\"selling_price\""},
+	CostPrice:     whereHelperint{field: "\"clean\".\"order_details\".\"cost_price\""},
+	CreatedAt:     whereHelpertime_Time{field: "\"clean\".\"order_details\".\"created_at\""},
+	UpdatedAt:     whereHelpertime_Time{field: "\"clean\".\"order_details\".\"updated_at\""},
+	CreatedBy:     whereHelpernull_String{field: "\"clean\".\"order_details\".\"created_by\""},
+	UpdatedBy:     whereHelpernull_String{field: "\"clean\".\"order_details\".\"updated_by\""},
 }
 
 // OrderDetailRels is where relationship names are stored.
@@ -436,7 +459,7 @@ func (q orderDetailQuery) One(ctx context.Context, exec boil.ContextExecutor) (*
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "clean: failed to execute a one query for order_detail")
+		return nil, errors.Wrap(err, "clean: failed to execute a one query for order_details")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -475,7 +498,7 @@ func (q orderDetailQuery) Count(ctx context.Context, exec boil.ContextExecutor) 
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "clean: failed to count order_detail rows")
+		return 0, errors.Wrap(err, "clean: failed to count order_details rows")
 	}
 
 	return count, nil
@@ -491,7 +514,7 @@ func (q orderDetailQuery) Exists(ctx context.Context, exec boil.ContextExecutor)
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "clean: failed to check if order_detail exists")
+		return false, errors.Wrap(err, "clean: failed to check if order_details exists")
 	}
 
 	return count > 0, nil
@@ -577,8 +600,8 @@ func (orderDetailL) LoadOrderNoOrder(ctx context.Context, e boil.ContextExecutor
 	}
 
 	query := NewQuery(
-		qm.From(`clean.order`),
-		qm.WhereIn(`clean.order.order_no in ?`, argsSlice...),
+		qm.From(`clean.orders`),
+		qm.WhereIn(`clean.orders.order_no in ?`, argsSlice...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -595,10 +618,10 @@ func (orderDetailL) LoadOrderNoOrder(ctx context.Context, e boil.ContextExecutor
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for order")
+		return errors.Wrap(err, "failed to close results of eager load for orders")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for order")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for orders")
 	}
 
 	if len(orderAfterSelectHooks) != 0 {
@@ -771,7 +794,7 @@ func (o *OrderDetail) SetOrderNoOrder(ctx context.Context, exec boil.ContextExec
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE \"clean\".\"order_detail\" SET %s WHERE %s",
+		"UPDATE \"clean\".\"order_details\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"order_no"}),
 		strmangle.WhereClause("\"", "\"", 2, orderDetailPrimaryKeyColumns),
 	)
@@ -818,7 +841,7 @@ func (o *OrderDetail) SetProductNameProduct(ctx context.Context, exec boil.Conte
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE \"clean\".\"order_detail\" SET %s WHERE %s",
+		"UPDATE \"clean\".\"order_details\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"product_name"}),
 		strmangle.WhereClause("\"", "\"", 2, orderDetailPrimaryKeyColumns),
 	)
@@ -855,10 +878,10 @@ func (o *OrderDetail) SetProductNameProduct(ctx context.Context, exec boil.Conte
 
 // OrderDetails retrieves all the records using an executor.
 func OrderDetails(mods ...qm.QueryMod) orderDetailQuery {
-	mods = append(mods, qm.From("\"clean\".\"order_detail\""))
+	mods = append(mods, qm.From("\"clean\".\"order_details\""))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"\"clean\".\"order_detail\".*"})
+		queries.SetSelect(q, []string{"\"clean\".\"order_details\".*"})
 	}
 
 	return orderDetailQuery{q}
@@ -874,7 +897,7 @@ func FindOrderDetail(ctx context.Context, exec boil.ContextExecutor, orderNo int
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"clean\".\"order_detail\" where \"order_no\"=$1 AND \"order_detail_no\"=$2", sel,
+		"select %s from \"clean\".\"order_details\" where \"order_no\"=$1 AND \"order_detail_no\"=$2", sel,
 	)
 
 	q := queries.Raw(query, orderNo, orderDetailNo)
@@ -884,7 +907,7 @@ func FindOrderDetail(ctx context.Context, exec boil.ContextExecutor, orderNo int
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "clean: unable to select from order_detail")
+		return nil, errors.Wrap(err, "clean: unable to select from order_details")
 	}
 
 	if err = orderDetailObj.doAfterSelectHooks(ctx, exec); err != nil {
@@ -898,7 +921,7 @@ func FindOrderDetail(ctx context.Context, exec boil.ContextExecutor, orderNo int
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *OrderDetail) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("clean: no order_detail provided for insertion")
+		return errors.New("clean: no order_details provided for insertion")
 	}
 
 	var err error
@@ -931,9 +954,9 @@ func (o *OrderDetail) Insert(ctx context.Context, exec boil.ContextExecutor, col
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"clean\".\"order_detail\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"clean\".\"order_details\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO \"clean\".\"order_detail\" %sDEFAULT VALUES%s"
+			cache.query = "INSERT INTO \"clean\".\"order_details\" %sDEFAULT VALUES%s"
 		}
 
 		var queryOutput, queryReturning string
@@ -961,7 +984,7 @@ func (o *OrderDetail) Insert(ctx context.Context, exec boil.ContextExecutor, col
 	}
 
 	if err != nil {
-		return errors.Wrap(err, "clean: unable to insert into order_detail")
+		return errors.Wrap(err, "clean: unable to insert into order_details")
 	}
 
 	if !cached {
@@ -992,10 +1015,10 @@ func (o *OrderDetail) Update(ctx context.Context, exec boil.ContextExecutor, col
 			orderDetailPrimaryKeyColumns,
 		)
 		if len(wl) == 0 {
-			return 0, errors.New("clean: unable to update order_detail, could not build whitelist")
+			return 0, errors.New("clean: unable to update order_details, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE \"clean\".\"order_detail\" SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE \"clean\".\"order_details\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
 			strmangle.WhereClause("\"", "\"", len(wl)+1, orderDetailPrimaryKeyColumns),
 		)
@@ -1015,12 +1038,12 @@ func (o *OrderDetail) Update(ctx context.Context, exec boil.ContextExecutor, col
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "clean: unable to update order_detail row")
+		return 0, errors.Wrap(err, "clean: unable to update order_details row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "clean: failed to get rows affected by update for order_detail")
+		return 0, errors.Wrap(err, "clean: failed to get rows affected by update for order_details")
 	}
 
 	if !cached {
@@ -1038,12 +1061,12 @@ func (q orderDetailQuery) UpdateAll(ctx context.Context, exec boil.ContextExecut
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "clean: unable to update all for order_detail")
+		return 0, errors.Wrap(err, "clean: unable to update all for order_details")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "clean: unable to retrieve rows affected for order_detail")
+		return 0, errors.Wrap(err, "clean: unable to retrieve rows affected for order_details")
 	}
 
 	return rowsAff, nil
@@ -1076,7 +1099,7 @@ func (o OrderDetailSlice) UpdateAll(ctx context.Context, exec boil.ContextExecut
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE \"clean\".\"order_detail\" SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE \"clean\".\"order_details\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, orderDetailPrimaryKeyColumns, len(o)))
 
@@ -1101,7 +1124,7 @@ func (o OrderDetailSlice) UpdateAll(ctx context.Context, exec boil.ContextExecut
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *OrderDetail) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
 	if o == nil {
-		return errors.New("clean: no order_detail provided for upsert")
+		return errors.New("clean: no order_details provided for upsert")
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {
@@ -1158,7 +1181,7 @@ func (o *OrderDetail) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 		)
 
 		if updateOnConflict && len(update) == 0 {
-			return errors.New("clean: unable to upsert order_detail, could not build update column list")
+			return errors.New("clean: unable to upsert order_details, could not build update column list")
 		}
 
 		ret := strmangle.SetComplement(orderDetailAllColumns, strmangle.SetIntersect(insert, update))
@@ -1166,13 +1189,13 @@ func (o *OrderDetail) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 		conflict := conflictColumns
 		if len(conflict) == 0 && updateOnConflict && len(update) != 0 {
 			if len(orderDetailPrimaryKeyColumns) == 0 {
-				return errors.New("clean: unable to upsert order_detail, could not build conflict column list")
+				return errors.New("clean: unable to upsert order_details, could not build conflict column list")
 			}
 
 			conflict = make([]string, len(orderDetailPrimaryKeyColumns))
 			copy(conflict, orderDetailPrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"clean\".\"order_detail\"", updateOnConflict, ret, update, conflict, insert, opts...)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"clean\".\"order_details\"", updateOnConflict, ret, update, conflict, insert, opts...)
 
 		cache.valueMapping, err = queries.BindMapping(orderDetailType, orderDetailMapping, insert)
 		if err != nil {
@@ -1207,7 +1230,7 @@ func (o *OrderDetail) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 		_, err = exec.ExecContext(ctx, cache.query, vals...)
 	}
 	if err != nil {
-		return errors.Wrap(err, "clean: unable to upsert order_detail")
+		return errors.Wrap(err, "clean: unable to upsert order_details")
 	}
 
 	if !cached {
@@ -1231,7 +1254,7 @@ func (o *OrderDetail) Delete(ctx context.Context, exec boil.ContextExecutor) (in
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), orderDetailPrimaryKeyMapping)
-	sql := "DELETE FROM \"clean\".\"order_detail\" WHERE \"order_no\"=$1 AND \"order_detail_no\"=$2"
+	sql := "DELETE FROM \"clean\".\"order_details\" WHERE \"order_no\"=$1 AND \"order_detail_no\"=$2"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1240,12 +1263,12 @@ func (o *OrderDetail) Delete(ctx context.Context, exec boil.ContextExecutor) (in
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "clean: unable to delete from order_detail")
+		return 0, errors.Wrap(err, "clean: unable to delete from order_details")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "clean: failed to get rows affected by delete for order_detail")
+		return 0, errors.Wrap(err, "clean: failed to get rows affected by delete for order_details")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -1265,12 +1288,12 @@ func (q orderDetailQuery) DeleteAll(ctx context.Context, exec boil.ContextExecut
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "clean: unable to delete all from order_detail")
+		return 0, errors.Wrap(err, "clean: unable to delete all from order_details")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "clean: failed to get rows affected by deleteall for order_detail")
+		return 0, errors.Wrap(err, "clean: failed to get rows affected by deleteall for order_details")
 	}
 
 	return rowsAff, nil
@@ -1296,7 +1319,7 @@ func (o OrderDetailSlice) DeleteAll(ctx context.Context, exec boil.ContextExecut
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM \"clean\".\"order_detail\" WHERE " +
+	sql := "DELETE FROM \"clean\".\"order_details\" WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, orderDetailPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
@@ -1311,7 +1334,7 @@ func (o OrderDetailSlice) DeleteAll(ctx context.Context, exec boil.ContextExecut
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "clean: failed to get rows affected by deleteall for order_detail")
+		return 0, errors.Wrap(err, "clean: failed to get rows affected by deleteall for order_details")
 	}
 
 	if len(orderDetailAfterDeleteHooks) != 0 {
@@ -1351,7 +1374,7 @@ func (o *OrderDetailSlice) ReloadAll(ctx context.Context, exec boil.ContextExecu
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT \"clean\".\"order_detail\".* FROM \"clean\".\"order_detail\" WHERE " +
+	sql := "SELECT \"clean\".\"order_details\".* FROM \"clean\".\"order_details\" WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, orderDetailPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -1369,7 +1392,7 @@ func (o *OrderDetailSlice) ReloadAll(ctx context.Context, exec boil.ContextExecu
 // OrderDetailExists checks if the OrderDetail row exists.
 func OrderDetailExists(ctx context.Context, exec boil.ContextExecutor, orderNo int, orderDetailNo int) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"clean\".\"order_detail\" where \"order_no\"=$1 AND \"order_detail_no\"=$2 limit 1)"
+	sql := "select exists(select 1 from \"clean\".\"order_details\" where \"order_no\"=$1 AND \"order_detail_no\"=$2 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1380,7 +1403,7 @@ func OrderDetailExists(ctx context.Context, exec boil.ContextExecutor, orderNo i
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "clean: unable to check if order_detail exists")
+		return false, errors.Wrap(err, "clean: unable to check if order_details exists")
 	}
 
 	return exists, nil

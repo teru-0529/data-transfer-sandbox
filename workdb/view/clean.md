@@ -42,7 +42,7 @@
 
 ----------
 
-## #3 受注(order)
+## #3 受注(orders)
 
 ### Fields
 
@@ -61,7 +61,7 @@
 
 #### Foreign Keys
 
-#### order_foreignKey_1
+#### orders_foreignKey_1
 
 * 参照先テーブル : 担当者(operators)
 * 削除時オプション : RESTRICT(デフォルト値)
@@ -73,7 +73,7 @@
 
 ----------
 
-## #4 受注明細(order_detail)
+## #4 受注明細(order_details)
 
 ### Fields
 
@@ -97,9 +97,9 @@
 
 #### Foreign Keys
 
-#### order_detail_foreignKey_1
+#### order_details_foreignKey_1
 
-* 参照先テーブル : 受注(order)
+* 参照先テーブル : 受注(orders)
 * 削除時オプション : CASCADE
 * 更新時オプション : CASCADE
 
@@ -107,7 +107,7 @@
 | -- | -- | -- |
 | 1 | 受注番号(order_no) | 受注番号(order_no) |
 
-#### order_detail_foreignKey_2
+#### order_details_foreignKey_2
 
 * 参照先テーブル : 商品(products)
 * 削除時オプション : RESTRICT(デフォルト値)
