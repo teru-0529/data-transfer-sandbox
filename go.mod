@@ -12,6 +12,7 @@ require (
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.17.1
 	github.com/volatiletech/strmangle v0.0.7-0.20240503230658-86517898275a
+	golang.org/x/text v0.21.0
 )
 
 require (
