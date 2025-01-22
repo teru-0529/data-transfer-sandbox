@@ -31,7 +31,10 @@ var cleansingCmd = &cobra.Command{
 		// PROCESS: クレンジング実行
 		clensingMsg := service.Cleansing(conns)
 
-		// TODO: cleanダンプ
+		// PROCESS: cleanダンプ
+		dumpPath := path.Join("dist/cleansing", fmt.Sprintf("%s-clean-dump-%s.sql", config.Base.LegacyFile, now.Format("060102-150405")))
+		extArgs := []string{"--data-only", "--schema=clean"}
+		infra.WriteDump(dumpPath, "work-db", config.WorkDB, extArgs)
 		// TODO: cleanダンプファイル更新
 
 		// PROCESS: 処理時間計測
@@ -41,12 +44,12 @@ var cleansingCmd = &cobra.Command{
 		msg := "# Data Cleansing Result\n\n"
 		msg += fmt.Sprintf("- **operation datetime**: %s\n", now.Format("2006/01/02 15:04:05"))
 		msg += fmt.Sprintf("- **transfer tool version**: %s\n", version)
-		msg += fmt.Sprintf("- **load legacy file**: %s\n", config.Base.LegacyFile)
+		msg += fmt.Sprintf("- **load legacy file**: %s\n", fmt.Sprintf("%s.sql", config.Base.LegacyFile))
 		msg += fmt.Sprintf("- **total elapsed time**: %s\n", elapse)
 		msg += clensingMsg
 
-		path := path.Join("dist/cleansing", fmt.Sprintf("cleansing-log-%s.md", now.Format("060102-150405")))
-		if err := infra.WriteText(path, msg); err != nil {
+		logPath := path.Join("log/cleansing", fmt.Sprintf("cleansing-log-%s.md", now.Format("060102-150405")))
+		if err := infra.WriteText(logPath, msg); err != nil {
 			return err
 		}
 
