@@ -5,9 +5,12 @@ package cmd
 
 import (
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 )
+
+var tZero = time.Unix(0, 0).UTC()
 
 var (
 	version     string
@@ -39,5 +42,5 @@ func Execute(ver string, date string) {
 func init() {
 	// PROCESS:サブコマンドの追加
 	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(migrateCmd)
+	rootCmd.AddCommand(cleansingCmd)
 }
