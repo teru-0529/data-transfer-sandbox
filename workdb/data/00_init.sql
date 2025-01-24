@@ -24,3 +24,22 @@ CREATE EVENT TRIGGER pgrst_watch
 
 CREATE SCHEMA IF NOT EXISTS work;
 CREATE SCHEMA IF NOT EXISTS clean;
+
+-- Create Table
+DROP TABLE IF EXISTS work.clean_db CASCADE;
+CREATE TABLE work.clean_db (
+  dump_key varchar(3) NOT NULL default 'key' check (dump_key = 'key'),
+  dump_file_name varchar(200) NOT NULL
+);
+
+-- Set Table Comment
+COMMENT ON TABLE work.clean_db IS 'クリーンデータベース';
+
+-- Set Column Comment
+COMMENT ON COLUMN work.clean_db.dump_key IS 'キー';
+COMMENT ON COLUMN work.clean_db.dump_file_name IS 'ダンプファイル名';
+
+-- Set PK Constraint
+ALTER TABLE work.clean_db ADD PRIMARY KEY (
+  dump_key
+);

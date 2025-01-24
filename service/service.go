@@ -4,6 +4,7 @@ Copyright © 2024 Teruaki Sato <andrea.pirlo.0529@gmail.com>
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"golang.org/x/text/language"
@@ -11,6 +12,8 @@ import (
 
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/service/cleansing"
+	"github.com/teru-0529/data-transfer-sandbox/spec/source/work"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 // TITLE: サービス共通
@@ -76,4 +79,11 @@ func cleansingResult(num int, result cleansing.Result) string {
 		p.Sprintf("%d", result.AcceptCount()),
 		result.AcceptRate(),
 	)
+}
+
+// FUNCTION: DumpfileNameの登録
+func RegisterDumpName(conns infra.DbConnection, filename string) {
+	fmt.Println(filename)
+	record := work.CleanDB{DumpFileName: filename}
+	fmt.Println(record.Upsert(context.Background(), conns.WorkDB, true, []string{"dump_key"}, boil.Infer(), boil.Infer()))
 }
