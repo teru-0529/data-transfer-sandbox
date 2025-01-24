@@ -35,6 +35,7 @@ type OperatorPiece struct {
 func NewOperators(conns infra.DbConnection) OperatorClensing {
 	s := time.Now()
 
+	// INFO: 固定値設定
 	cs := OperatorClensing{
 		conns: conns,
 		Result: Result{
@@ -56,7 +57,7 @@ func NewOperators(conns infra.DbConnection) OperatorClensing {
 	// PROCESS: 1行ごと処理
 	cs.iterate()
 
-	// PROCESS: 固定データ登録(EXT)
+	// INFO: 固定データ登録(EXT)
 	rec := clean.Operator{
 		OperatorID:   "Z9999",
 		OperatorName: "N/A",
@@ -73,6 +74,7 @@ func NewOperators(conns infra.DbConnection) OperatorClensing {
 
 // FUNCTION: 入力データ量
 func (cs *OperatorClensing) setEntryCount() {
+	// INFO: Legacyテーブル名
 	num, err := legacy.Operators().Count(ctx, cs.conns.LegacyDB)
 	if err != nil {
 		log.Fatalln(err)
@@ -85,6 +87,7 @@ func (cs *OperatorClensing) iterate() {
 
 	// PROCESS: 1000件単位でのSQL実行に分割する
 	for section := 0; section < cs.Result.sectionCount(); section++ {
+		// INFO: Legacyテーブル名
 		records, err := legacy.Operators(qm.Limit(LIMIT), qm.Offset(section*LIMIT)).All(ctx, cs.conns.LegacyDB)
 		if err != nil {
 			log.Fatalln(err)
@@ -101,6 +104,7 @@ func (cs *OperatorClensing) iterate() {
 
 // FUNCTION: レコード毎のチェック
 func (cs *OperatorClensing) checkAndClensing(record *legacy.Operator) *OperatorPiece {
+	// INFO: piece
 	piece := OperatorPiece{
 		OperatorId: record.OperatorID,
 		status:     NO_CHANGE,
@@ -131,6 +135,7 @@ func (cs *OperatorClensing) saveData(record *legacy.Operator, piece *OperatorPie
 	}
 
 	// PROCESS: データ登録
+	// INFO: cleanテーブル
 	rec := clean.Operator{
 		OperatorID:   record.OperatorID,
 		OperatorName: record.OperatorName,

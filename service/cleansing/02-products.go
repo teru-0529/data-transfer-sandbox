@@ -34,6 +34,7 @@ type ProductPiece struct {
 func NewProducts(conns infra.DbConnection) ProductsClensing {
 	s := time.Now()
 
+	// INFO: 固定値設定
 	cs := ProductsClensing{conns: conns, Result: Result{
 		TableNameJp: "商品",
 		TableNameEn: "products",
@@ -59,6 +60,7 @@ func NewProducts(conns infra.DbConnection) ProductsClensing {
 
 // FUNCTION: 入力データ量
 func (cs *ProductsClensing) setEntryCount() {
+	// INFO: Legacyテーブル名
 	num, err := legacy.Products().Count(ctx, cs.conns.LegacyDB)
 	if err != nil {
 		log.Fatalln(err)
@@ -71,6 +73,7 @@ func (cs *ProductsClensing) iterate() {
 
 	// PROCESS: 1000件単位でのSQL実行に分割する
 	for section := 0; section < cs.Result.sectionCount(); section++ {
+		// INFO: Legacyテーブル名
 		records, err := legacy.Products(qm.Limit(LIMIT), qm.Offset(section*LIMIT)).All(ctx, cs.conns.LegacyDB)
 		if err != nil {
 			log.Fatalln(err)
@@ -87,6 +90,7 @@ func (cs *ProductsClensing) iterate() {
 
 // FUNCTION: レコード毎のチェック
 func (cs *ProductsClensing) checkAndClensing(record *legacy.Product) *ProductPiece {
+	// INFO: piece
 	piece := ProductPiece{
 		ProductName: record.ProductName,
 		status:      NO_CHANGE,
@@ -118,6 +122,7 @@ func (cs *ProductsClensing) saveData(record *legacy.Product, piece *ProductPiece
 	}
 
 	// PROCESS: データ登録
+	// INFO: cleanテーブル
 	rec := clean.Product{
 		ProductName: record.ProductName,
 		CostPrice:   record.CostPrice,

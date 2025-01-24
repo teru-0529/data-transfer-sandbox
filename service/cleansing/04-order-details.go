@@ -35,6 +35,7 @@ type OrderDetailPiece struct {
 func NewOrderDetails(conns infra.DbConnection) OrderDetailsClensing {
 	s := time.Now()
 
+	// INFO: 固定値設定
 	cs := OrderDetailsClensing{conns: conns, Result: Result{
 		TableNameJp: "受注明細",
 		TableNameEn: "order_details",
@@ -60,6 +61,7 @@ func NewOrderDetails(conns infra.DbConnection) OrderDetailsClensing {
 
 // FUNCTION: 入力データ量
 func (cs *OrderDetailsClensing) setEntryCount() {
+	// INFO: Legacyテーブル名
 	num, err := legacy.OrderDetails().Count(ctx, cs.conns.LegacyDB)
 	if err != nil {
 		log.Fatalln(err)
@@ -72,6 +74,7 @@ func (cs *OrderDetailsClensing) iterate() {
 
 	// PROCESS: 1000件単位でのSQL実行に分割する
 	for section := 0; section < cs.Result.sectionCount(); section++ {
+		// INFO: Legacyテーブル名
 		records, err := legacy.OrderDetails(qm.Limit(LIMIT), qm.Offset(section*LIMIT)).All(ctx, cs.conns.LegacyDB)
 		if err != nil {
 			log.Fatalln(err)
@@ -88,6 +91,7 @@ func (cs *OrderDetailsClensing) iterate() {
 
 // FUNCTION: レコード毎のチェック
 func (cs *OrderDetailsClensing) checkAndClensing(record *legacy.OrderDetail) *OrderDetailPiece {
+	// INFO: piece
 	piece := OrderDetailPiece{
 		OrderNo:       record.OrderNo,
 		OrderDetailNo: record.OrderDetailNo,
@@ -139,6 +143,7 @@ func (cs *OrderDetailsClensing) saveData(record *legacy.OrderDetail, piece *Orde
 	}
 
 	// PROCESS: データ登録
+	// INFO: cleanテーブル
 	rec := clean.OrderDetail{
 		OrderNo:           record.OrderNo,
 		OrderDetailNo:     record.OrderDetailNo,
