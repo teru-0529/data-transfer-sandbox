@@ -6,6 +6,8 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
+	"path"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -25,7 +27,12 @@ var loadCmd = &cobra.Command{
 		// STRUCT: 現在時刻(Elapse計測用)
 		now := time.Now()
 
-		lodfile := fmt.Sprintf("%s.sql.gz", loadkey)
+		// PROCESS: ファイルが存在しない場合エラー
+		loadfile := fmt.Sprintf("%s.sql.gz", loadkey)
+		loadfilePath := path.Join("dist", path.Join("cleansing", loadfile))
+		if f, err := os.Stat(loadfilePath); os.IsNotExist(err) || f.IsDir() {
+			return fmt.Errorf("not exist dumpfile[%s]: %s", loadfile, err.Error())
+		}
 
 		// PROCESS: config, データベース(Sqlboiler)コネクションの取得
 		config, conns, cleanUp := infra.LeadConfig()
@@ -36,10 +43,10 @@ var loadCmd = &cobra.Command{
 
 		// PROCESS: データロード
 		container := infra.NewContainer("work-db", config.WorkDB)
-		if err := container.LoadDb(lodfile); err != nil {
+		if err := container.LoadDb(loadfilePath); err != nil {
 			return err
 		}
-		service.RegisterDumpName(conns, lodfile)
+		service.RegisterDumpName(conns, loadfile)
 
 		// PROCESS: 処理時間計測
 		elapse := tZero.Add(time.Duration(time.Since(now))).Format("15:04:05.000")

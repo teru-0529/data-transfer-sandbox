@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"time"
 )
@@ -32,14 +31,8 @@ func NewContainer(name string, config DbConfig) DbContainer {
 }
 
 // FUNCTION: ダンプファイルをLoadする
-func (ct DbContainer) LoadDb(loadfile string) error {
+func (ct DbContainer) LoadDb(loadfilePath string) error {
 	s := time.Now()
-
-	// PROCESS: ファイルが存在しない場合エラー
-	loadfilePath := path.Join("dist", path.Join("cleansing", loadfile))
-	if f, err := os.Stat(loadfilePath); os.IsNotExist(err) || f.IsDir() {
-		return fmt.Errorf("not exist dumpfile[%s]: %s", loadfile, err.Error())
-	}
 
 	// PROCESS: コンテナ内にコピー
 	// docker cp {dumpfile.sql.gz} {work-db}:/tmp/dumpfile.sql.gz
@@ -62,9 +55,17 @@ func (ct DbContainer) LoadDb(loadfile string) error {
 	}
 
 	duration := time.Since(s).Seconds()
-	log.Printf("load completed [%s] … %3.2fs\n", filepath.Base(loadfile), duration)
+	log.Printf("load completed [%s] … %3.2fs\n", filepath.Base(loadfilePath), duration)
 	return nil
+}
 
+// FUNCTION: ダンプファイルをLoadする
+func (ct DbContainer) DumpDb(dumpfilePath string) error {
+	s := time.Now()
+
+	duration := time.Since(s).Seconds()
+	log.Printf("pg_dump completed [%s] … %3.2fs\n", filepath.Base(dumpfilePath), duration)
+	return nil
 }
 
 // FUNCTION: Dockerコマンド実行
