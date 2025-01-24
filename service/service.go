@@ -12,11 +12,16 @@ import (
 
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/service/cleansing"
+	"github.com/teru-0529/data-transfer-sandbox/spec/source/clean"
 	"github.com/teru-0529/data-transfer-sandbox/spec/source/work"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries"
 )
 
 // TITLE: サービス共通
+
+// STRUCT: ダミーコンテキスト
+var ctx context.Context = context.Background()
 
 // STRUCT: printer(数値をカンマ区切りで出力するために利用)
 var p = message.NewPrinter(language.Japanese)
@@ -83,7 +88,20 @@ func cleansingResult(num int, result cleansing.Result) string {
 
 // FUNCTION: DumpfileNameの登録
 func RegisterDumpName(conns infra.DbConnection, filename string) {
-	fmt.Println(filename)
 	record := work.CleanDB{DumpFileName: filename}
-	fmt.Println(record.Upsert(context.Background(), conns.WorkDB, true, []string{"dump_key"}, boil.Infer(), boil.Infer()))
+	record.Upsert(ctx, conns.WorkDB, true, []string{"dump_key"}, boil.Infer(), boil.Infer())
+}
+
+// FUNCTION: cleanDBのテーブルを全てtruncate
+func TruncateCleanDbAll(conns infra.DbConnection) {
+	// INFO: テーブルリスト
+	tables := []string{
+		clean.TableNames.Operators,
+		clean.TableNames.Products,
+		clean.TableNames.Orders,
+		clean.TableNames.OrderDetails,
+	}
+	for _, name := range tables {
+		queries.Raw(fmt.Sprintf("truncate clean.%s CASCADE;", name)).ExecContext(ctx, conns.WorkDB)
+	}
 }

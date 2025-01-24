@@ -29,7 +29,7 @@ var loadCmd = &cobra.Command{
 
 		// PROCESS: ファイルが存在しない場合エラー
 		loadfile := fmt.Sprintf("%s.sql.gz", loadkey)
-		loadfilePath := path.Join("dist", path.Join("cleansing", loadfile))
+		loadfilePath := path.Join("dist/cleansing", loadfile)
 		if f, err := os.Stat(loadfilePath); os.IsNotExist(err) || f.IsDir() {
 			return fmt.Errorf("not exist dumpfile[%s]: %s", loadfile, err.Error())
 		}

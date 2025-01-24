@@ -32,10 +32,14 @@ var cleansingCmd = &cobra.Command{
 		clensingMsg := service.Cleansing(conns)
 
 		// PROCESS: cleanダンプ
-		dumpPath := path.Join("dist/cleansing", fmt.Sprintf("%s-clean-dump-%s.sql", config.Base.LegacyFile, now.Format("060102-150405")))
+		dumpfile := fmt.Sprintf("%s-clean-dump-%s.sql.gz", config.Base.LegacyFile, now.Format("060102-150405"))
+		dumpfilePath := path.Join("dist/cleansing", dumpfile)
 		extArgs := []string{"--data-only", "--schema=clean"}
-		infra.WriteDump(dumpPath, "work-db", config.WorkDB, extArgs)
-		// TODO: cleanダンプファイル更新
+		container := infra.NewContainer("work-db", config.WorkDB)
+		if err := container.DumpDb(dumpfilePath, extArgs); err != nil {
+			return err
+		}
+		service.RegisterDumpName(conns, dumpfile)
 
 		// PROCESS: 処理時間計測
 		elapse := tZero.Add(time.Duration(time.Since(now))).Format("15:04:05.000")
@@ -58,5 +62,6 @@ var cleansingCmd = &cobra.Command{
 	},
 }
 
+// FUNCTION:
 func init() {
 }
