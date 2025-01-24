@@ -43,4 +43,5 @@ func init() {
 	// PROCESS:サブコマンドの追加
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(cleansingCmd)
+	rootCmd.AddCommand(loadCmd)
 }
