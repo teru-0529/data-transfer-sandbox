@@ -32,6 +32,14 @@ type OrderDetailPiece struct {
 	message       string
 }
 
+// FUNCTION: メッセージの追加
+func (p *OrderDetailPiece) addMessage(msg string) {
+	if len(p.message) != 0 {
+		p.message += "<BR>"
+	}
+	p.message += msg
+}
+
 // FUNCTION:
 func NewOrderDetails(conns infra.DbConnection) OrderDetailsClensing {
 	s := time.Now()
@@ -41,6 +49,7 @@ func NewOrderDetails(conns infra.DbConnection) OrderDetailsClensing {
 		TableNameJp: "受注明細",
 		TableNameEn: "order_details",
 	}}
+	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
 	// PROCESS: 入力データ量
 	cs.setEntryCount()
@@ -56,7 +65,7 @@ func NewOrderDetails(conns infra.DbConnection) OrderDetailsClensing {
 
 	duration := time.Since(s).Seconds()
 	cs.Result.duration = duration
-	log.Printf("cleansing completed [%s] … %3.2fs\n", cs.Result.TableNameEn, duration)
+	log.Printf("cleansing completed … %3.2fs\n", duration)
 	return cs
 }
 
@@ -106,14 +115,10 @@ func (cs *OrderDetailsClensing) checkAndClensing(record *legacy.OrderDetail) *Or
 	}
 
 	// PROCESS: shipping_flag/ cancel_flagの両方がtrueの場合、移行対象から除外する。
-
 	if record.ShippingFlag && record.CanceledFlag {
 		piece.status = REMOVE
 		piece.approved = true
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += "● shipping_flag(出荷済フラグ)、canceled_flag(キャンセルフラグ)がいずれも `true`。移行対象から除外。"
+		piece.addMessage("● shipping_flag(出荷済フラグ)、canceled_flag(キャンセルフラグ)がいずれも `true`。移行対象から除外。")
 	}
 
 	// PROCESS: product_nameが[担当者]に存在しない場合、移行対象から除外する。
@@ -121,22 +126,17 @@ func (cs *OrderDetailsClensing) checkAndClensing(record *legacy.OrderDetail) *Or
 	if !ok1 {
 		piece.status = REMOVE
 		piece.approved = true
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("● product_name(商品名) が[商品]に存在しない。移行対象から除外 `%s`。", record.ProductName)
+		piece.addMessage(fmt.Sprintf("● product_name(商品名) が[商品]に存在しない。移行対象から除外 `%s`。", record.ProductName))
 	}
 
 	// PROCESS: order_noが[担当者]に存在しない場合、移行対象から除外する。
-	ok2, _ := legacy.OrderExists(ctx, cs.conns.LegacyDB, record.OrderNo)
-	if !ok2 {
-		piece.status = REMOVE
-		piece.approved = true
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("● order_no(受注番号) が[受注]に存在しない。移行対象から除外 `%d`。", record.OrderNo)
-	}
+	// TODO: クレンジング処理未記載の状況際限のためコメントアウト
+	// ok2, _ := legacy.OrderExists(ctx, cs.conns.LegacyDB, record.OrderNo)
+	// if !ok2 {
+	// 	piece.status = REMOVE
+	// 	piece.approved = true
+	// 	piece.addMessage(fmt.Sprintf("● order_no(受注番号) が[受注]に存在しない。移行対象から除外 `%d`。", record.OrderNo))
+	// }
 
 	return &piece
 }
@@ -169,10 +169,7 @@ func (cs *OrderDetailsClensing) saveData(record *legacy.OrderDetail, piece *Orde
 	if err != nil {
 		piece.status = REMOVE
 		piece.approved = false
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("%v", err)
+		piece.addMessage(fmt.Sprintf("%v", err))
 	}
 	cs.setResult(piece)
 }

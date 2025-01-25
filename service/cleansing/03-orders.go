@@ -31,6 +31,14 @@ type OrderPiece struct {
 	message  string
 }
 
+// FUNCTION: メッセージの追加
+func (p *OrderPiece) addMessage(msg string) {
+	if len(p.message) != 0 {
+		p.message += "<BR>"
+	}
+	p.message += msg
+}
+
 // FUNCTION:
 func NewOrders(conns infra.DbConnection) OrdersClensing {
 	s := time.Now()
@@ -40,6 +48,7 @@ func NewOrders(conns infra.DbConnection) OrdersClensing {
 		TableNameJp: "受注",
 		TableNameEn: "orders",
 	}}
+	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
 	// PROCESS: 入力データ量
 	cs.setEntryCount()
@@ -55,7 +64,7 @@ func NewOrders(conns infra.DbConnection) OrdersClensing {
 
 	duration := time.Since(s).Seconds()
 	cs.Result.duration = duration
-	log.Printf("cleansing completed [%s] … %3.2fs\n", cs.Result.TableNameEn, duration)
+	log.Printf("cleansing completed … %3.2fs\n", duration)
 	return cs
 }
 
@@ -112,10 +121,7 @@ func (cs *OrdersClensing) checkAndClensing(record *legacy.Order) *OrderPiece {
 
 		piece.status = MODIFY
 		piece.approved = true
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("● order_date(受注日付) が日付フォーマットではない。`%s` → `%s`(固定値) にクレンジング。", orderDate, defOrderDate)
+		piece.addMessage(fmt.Sprintf("● order_date(受注日付) が日付フォーマットではない。`%s` → `%s`(固定値) にクレンジング。", orderDate, defOrderDate))
 	}
 
 	// PROCESS: order_picが[担当者]に存在しない場合は、"N/A"にクレンジングする。
@@ -129,10 +135,7 @@ func (cs *OrdersClensing) checkAndClensing(record *legacy.Order) *OrderPiece {
 
 		piece.status = MODIFY
 		piece.approved = true
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("● order_pic(受注担当者名) が[担当者]に存在しない。`%s` → `%s`(固定値) にクレンジング。", orderPic, defOrderPic)
+		piece.addMessage(fmt.Sprintf("● order_pic(受注担当者名) が[担当者]に存在しない。`%s` → `%s`(固定値) にクレンジング。", orderPic, defOrderPic))
 	}
 
 	return &piece
@@ -164,10 +167,7 @@ func (cs *OrdersClensing) saveData(record *legacy.Order, piece *OrderPiece) {
 	if err != nil {
 		piece.status = REMOVE
 		piece.approved = false
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("%v", err)
+		piece.addMessage(fmt.Sprintf("%v", err))
 	}
 	cs.setResult(piece)
 }

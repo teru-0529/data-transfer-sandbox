@@ -6,6 +6,7 @@ package cleansing
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
@@ -32,6 +33,14 @@ type OperatorPiece struct {
 	message    string
 }
 
+// FUNCTION: メッセージの追加
+func (p *OperatorPiece) addMessage(msg string) {
+	if len(p.message) != 0 {
+		p.message += "<BR>"
+	}
+	p.message += msg
+}
+
 // FUNCTION:
 func NewOperators(conns infra.DbConnection) OperatorClensing {
 	s := time.Now()
@@ -45,6 +54,7 @@ func NewOperators(conns infra.DbConnection) OperatorClensing {
 		},
 		keys: map[string]struct{}{},
 	}
+	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
 	// PROCESS: 入力データ量
 	cs.setEntryCount()
@@ -69,7 +79,7 @@ func NewOperators(conns infra.DbConnection) OperatorClensing {
 
 	duration := time.Since(s).Seconds()
 	cs.Result.duration = duration
-	log.Printf("cleansing completed [%s] … %3.2fs\n", cs.Result.TableNameEn, duration)
+	log.Printf("cleansing completed … %3.2fs\n", duration)
 	return cs
 }
 
@@ -121,10 +131,18 @@ func (cs *OperatorClensing) checkAndClensing(record *legacy.Operator) *OperatorP
 	if ok {
 		piece.status = REMOVE
 		piece.approved = true
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("● operator_name(担当者名) がユニーク制約に違反。移行対象から除外 `%s` 。", record.OperatorName)
+		piece.addMessage(fmt.Sprintf("● operator_name(担当者名) がユニーク制約に違反。移行対象から除外 `%s` 。", record.OperatorName))
+	}
+
+	// PROCESS: 担当者IDが5桁ではない場合、末尾に「X」を埋めてクレンジングする。
+	operatorId := record.OperatorID
+
+	if len(operatorId) < 5 {
+		record.OperatorID = operatorId + strings.Repeat("X", 5-len(operatorId))
+
+		piece.status = MODIFY
+		piece.approved = false
+		piece.addMessage(fmt.Sprintf("● operator_id(担当者ID) の桁数が5桁未満。末尾に`X`を追加しクレンジング (%d桁) 。", len(operatorId)))
 	}
 
 	// PROCESS: ユニークキーとして担当者名を登録
@@ -154,11 +172,7 @@ func (cs *OperatorClensing) saveData(record *legacy.Operator, piece *OperatorPie
 	if err != nil {
 		piece.status = REMOVE
 		piece.approved = false
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("%v", err)
-
+		piece.addMessage(fmt.Sprintf("%v", err))
 	}
 	cs.setResult(piece)
 }

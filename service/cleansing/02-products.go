@@ -31,6 +31,14 @@ type ProductPiece struct {
 	message     string
 }
 
+// FUNCTION: メッセージの追加
+func (p *ProductPiece) addMessage(msg string) {
+	if len(p.message) != 0 {
+		p.message += "<BR>"
+	}
+	p.message += msg
+}
+
 // FUNCTION:
 func NewProducts(conns infra.DbConnection) ProductsClensing {
 	s := time.Now()
@@ -40,6 +48,7 @@ func NewProducts(conns infra.DbConnection) ProductsClensing {
 		TableNameJp: "商品",
 		TableNameEn: "products",
 	}}
+	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
 	// PROCESS: 入力データ量
 	cs.setEntryCount()
@@ -55,7 +64,7 @@ func NewProducts(conns infra.DbConnection) ProductsClensing {
 
 	duration := time.Since(s).Seconds()
 	cs.Result.duration = duration
-	log.Printf("cleansing completed [%s] … %3.2fs\n", cs.Result.TableNameEn, duration)
+	log.Printf("cleansing completed … %3.2fs\n", duration)
 	return cs
 }
 
@@ -110,10 +119,7 @@ func (cs *ProductsClensing) checkAndClensing(record *legacy.Product) *ProductPie
 
 		piece.status = MODIFY
 		piece.approved = false
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("● cost_price(商品原価) が負の数。`%d` → `0`(固定値) にクレンジング。", costPrice)
+		piece.addMessage(fmt.Sprintf("● cost_price(商品原価) が負の数。`%d` → `0`(固定値) にクレンジング。", costPrice))
 	}
 
 	return &piece
@@ -141,10 +147,7 @@ func (cs *ProductsClensing) saveData(record *legacy.Product, piece *ProductPiece
 	if err != nil {
 		piece.status = REMOVE
 		piece.approved = false
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("%v", err)
+		piece.addMessage(fmt.Sprintf("%v", err))
 	}
 	cs.setResult(piece)
 }
