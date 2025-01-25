@@ -64,6 +64,14 @@ func (ct DbContainer) LoadDb(loadfilePath string) error {
 func (ct DbContainer) DumpDb(dumpfilePath string, extArgs []string) error {
 	s := time.Now()
 
+	// PROCESS: フォルダが存在しない場合作成する
+	dir := filepath.Dir(dumpfilePath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, 0777); err != nil {
+			return fmt.Errorf("cannot create directory: %s", err.Error())
+		}
+	}
+
 	// PROCESS: cleanDBをダンプ
 	// docker exec -e PGPASSWORD={password} -i {work-db} bash -c pg_dump -U {postgres} -d {workDB} {--data-only --schema=clean} > {/tmp/dump.sql} && gzip {/tmp/dump.sql}
 	command := fmt.Sprintf("pg_dump -U %s -d %s %s > %s && gzip -f %s", ct.Config.User, ct.Config.Database, strings.Join(extArgs, " "), TEMP_PATH, TEMP_PATH)
