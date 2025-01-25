@@ -77,6 +77,11 @@
 
 ## 変更履歴
 
+### v0.3.0-rc.0
+
+* cleansing機能完成
+* cleanDBへのLoad機能完成
+
 ### v0.2.0
 
 * maigration実行ログの出力
