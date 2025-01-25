@@ -8,6 +8,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/spec/source/clean"
 	"github.com/teru-0529/data-transfer-sandbox/spec/source/legacy"
@@ -71,6 +72,8 @@ func (cs *OrderDetailsClensing) setEntryCount() {
 
 // FUNCTION: データ繰り返し取得(1000件単位で分割)
 func (cs *OrderDetailsClensing) iterate() {
+	bar := pb.Default.Start(cs.Result.EntryCount)
+	bar.SetMaxWidth(80)
 
 	// PROCESS: 1000件単位でのSQL実行に分割する
 	for section := 0; section < cs.Result.sectionCount(); section++ {
@@ -85,8 +88,12 @@ func (cs *OrderDetailsClensing) iterate() {
 			piece := cs.checkAndClensing(record)
 			// PROCESS: レコード毎のクレンジング後データ登録
 			cs.saveData(record, piece)
+
+			// time.Sleep(10 * time.Millisecond)
+			bar.Increment()
 		}
 	}
+	bar.Finish()
 }
 
 // FUNCTION: レコード毎のチェック
