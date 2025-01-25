@@ -33,12 +33,15 @@ type OperatorPiece struct {
 	message    string
 }
 
+// FUNCTION: ステータスの変更
+func (p *OperatorPiece) setStatus(status Status, approved bool) {
+	p.status = judgeStatus(p.status, status)
+	p.approved = p.approved && approved
+}
+
 // FUNCTION: メッセージの追加
-func (p *OperatorPiece) addMessage(msg string) {
-	if len(p.message) != 0 {
-		p.message += "<BR>"
-	}
-	p.message += msg
+func (p *OperatorPiece) addMessage(msg string, id string) {
+	p.message = genMessage(p.message, msg, id)
 }
 
 // FUNCTION:
@@ -124,25 +127,28 @@ func (cs *OperatorClensing) checkAndClensing(record *legacy.Operator) *OperatorP
 	piece := OperatorPiece{
 		OperatorId: record.OperatorID,
 		status:     NO_CHANGE,
+		approved:   true,
 	}
 
-	// PROCESS: 担当者のユニークチェック、すでに担当者名が存在する場合、移行対象から除外する。
+	// PROCESS: #1-01: 担当者のユニークチェック、すでに担当者名が存在する場合、移行対象から除外する。
 	_, ok := cs.keys[record.OperatorName]
 	if ok {
-		piece.status = REMOVE
-		piece.approved = true
-		piece.addMessage(fmt.Sprintf("● operator_name(担当者名) がユニーク制約に違反。移行対象から除外 `%s` 。", record.OperatorName))
+		piece.setStatus(REMOVE, true)
+		piece.addMessage(
+			fmt.Sprintf("operator_name(担当者名) がユニーク制約に違反。移行対象から除外 `%s` 。", record.OperatorName),
+			"#1-01")
 	}
 
-	// PROCESS: 担当者IDが5桁ではない場合、末尾に「X」を埋めてクレンジングする。
+	// PROCESS: #1-02: 担当者IDが5桁ではない場合、末尾に「X」を埋めてクレンジングする。
 	operatorId := record.OperatorID
 
 	if len(operatorId) < 5 {
 		record.OperatorID = operatorId + strings.Repeat("X", 5-len(operatorId))
 
-		piece.status = MODIFY
-		piece.approved = false
-		piece.addMessage(fmt.Sprintf("● operator_id(担当者ID) の桁数が5桁未満。末尾に`X`を追加しクレンジング (%d桁) 。", len(operatorId)))
+		piece.setStatus(MODIFY, false)
+		piece.addMessage(
+			fmt.Sprintf("operator_id(担当者ID) の桁数が5桁未満。末尾に`X`を追加しクレンジング (%d桁) 。", len(operatorId)),
+			"#1-02")
 	}
 
 	// PROCESS: ユニークキーとして担当者名を登録
@@ -170,9 +176,8 @@ func (cs *OperatorClensing) saveData(record *legacy.Operator, piece *OperatorPie
 
 	// PROCESS: 登録に失敗した場合は、削除(エラーログを格納、未承認扱い)
 	if err != nil {
-		piece.status = REMOVE
-		piece.approved = false
-		piece.addMessage(fmt.Sprintf("%v", err))
+		piece.setStatus(REMOVE, false)
+		piece.addMessage(fmt.Sprintf("%v", err), "")
 	}
 	cs.setResult(piece)
 }

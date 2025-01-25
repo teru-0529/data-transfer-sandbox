@@ -31,12 +31,15 @@ type ProductPiece struct {
 	message     string
 }
 
+// FUNCTION: ステータスの変更
+func (p *ProductPiece) setStatus(status Status, approved bool) {
+	p.status = judgeStatus(p.status, status)
+	p.approved = p.approved && approved
+}
+
 // FUNCTION: メッセージの追加
-func (p *ProductPiece) addMessage(msg string) {
-	if len(p.message) != 0 {
-		p.message += "<BR>"
-	}
-	p.message += msg
+func (p *ProductPiece) addMessage(msg string, id string) {
+	p.message = genMessage(p.message, msg, id)
 }
 
 // FUNCTION:
@@ -109,17 +112,17 @@ func (cs *ProductsClensing) checkAndClensing(record *legacy.Product) *ProductPie
 	piece := ProductPiece{
 		ProductName: record.ProductName,
 		status:      NO_CHANGE,
+		approved:    true,
 	}
 
-	// PROCESS: cost_priceが負の数字の場合は、0にクレンジングする。
+	// PROCESS: #2-01: cost_priceが負の数字の場合は、0にクレンジングする。
 	costPrice := record.CostPrice
 
 	if costPrice < 0 {
 		record.CostPrice = 0
 
-		piece.status = MODIFY
-		piece.approved = false
-		piece.addMessage(fmt.Sprintf("● cost_price(商品原価) が負の数。`%d` → `0`(固定値) にクレンジング。", costPrice))
+		piece.setStatus(MODIFY, false)
+		piece.addMessage(fmt.Sprintf("cost_price(商品原価) が負の数。`%d` → `0`(固定値) にクレンジング。", costPrice), "#2-01")
 	}
 
 	return &piece
@@ -145,9 +148,8 @@ func (cs *ProductsClensing) saveData(record *legacy.Product, piece *ProductPiece
 
 	// PROCESS: 登録に失敗した場合は、削除(エラーログを格納、未承認扱い)
 	if err != nil {
-		piece.status = REMOVE
-		piece.approved = false
-		piece.addMessage(fmt.Sprintf("%v", err))
+		piece.setStatus(REMOVE, false)
+		piece.addMessage(fmt.Sprintf("%v", err), "")
 	}
 	cs.setResult(piece)
 }

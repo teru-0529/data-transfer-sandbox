@@ -31,12 +31,15 @@ type OrderPiece struct {
 	message  string
 }
 
+// FUNCTION: ステータスの変更
+func (p *OrderPiece) setStatus(status Status, approved bool) {
+	p.status = judgeStatus(p.status, status)
+	p.approved = p.approved && approved
+}
+
 // FUNCTION: メッセージの追加
-func (p *OrderPiece) addMessage(msg string) {
-	if len(p.message) != 0 {
-		p.message += "<BR>"
-	}
-	p.message += msg
+func (p *OrderPiece) addMessage(msg string, id string) {
+	p.message = genMessage(p.message, msg, id)
 }
 
 // FUNCTION:
@@ -107,11 +110,12 @@ func (cs *OrdersClensing) iterate() {
 func (cs *OrdersClensing) checkAndClensing(record *legacy.Order) *OrderPiece {
 	// INFO: piece
 	piece := OrderPiece{
-		OrderNo: record.OrderNo,
-		status:  NO_CHANGE,
+		OrderNo:  record.OrderNo,
+		status:   NO_CHANGE,
+		approved: true,
 	}
 
-	// PROCESS: order_dateが日付のフォーマットに合致しない場合は、"20250101"にクレンジングする。
+	// PROCESS: #3-01: order_dateが日付のフォーマットに合致しない場合は、"20250101"にクレンジングする。
 	orderDate := record.OrderDate
 	var defOrderDate = "20250101"
 
@@ -119,12 +123,12 @@ func (cs *OrdersClensing) checkAndClensing(record *legacy.Order) *OrderPiece {
 	if err != nil {
 		record.OrderDate = defOrderDate
 
-		piece.status = MODIFY
-		piece.approved = true
-		piece.addMessage(fmt.Sprintf("● order_date(受注日付) が日付フォーマットではない。`%s` → `%s`(固定値) にクレンジング。", orderDate, defOrderDate))
+		piece.setStatus(MODIFY, true)
+		piece.addMessage(
+			fmt.Sprintf("order_date(受注日付) が日付フォーマットではない。`%s` → `%s`(固定値) にクレンジング。", orderDate, defOrderDate), "#3-01")
 	}
 
-	// PROCESS: order_picが[担当者]に存在しない場合は、"N/A"にクレンジングする。
+	// PROCESS: #3-02: order_picが[担当者]に存在しない場合は、"N/A"にクレンジングする。
 	orderPic := record.OrderPic
 	var defOrderPic = "N/A"
 
@@ -133,9 +137,8 @@ func (cs *OrdersClensing) checkAndClensing(record *legacy.Order) *OrderPiece {
 	if !ok1 {
 		record.OrderPic = defOrderPic
 
-		piece.status = MODIFY
-		piece.approved = true
-		piece.addMessage(fmt.Sprintf("● order_pic(受注担当者名) が[担当者]に存在しない。`%s` → `%s`(固定値) にクレンジング。", orderPic, defOrderPic))
+		piece.setStatus(MODIFY, true)
+		piece.addMessage(fmt.Sprintf("order_pic(受注担当者名) が[担当者]に存在しない。`%s` → `%s`(固定値) にクレンジング。", orderPic, defOrderPic), "#3-02")
 	}
 
 	return &piece
@@ -165,9 +168,8 @@ func (cs *OrdersClensing) saveData(record *legacy.Order, piece *OrderPiece) {
 
 	// PROCESS: 登録に失敗した場合は、削除(エラーログを格納、未承認扱い)
 	if err != nil {
-		piece.status = REMOVE
-		piece.approved = false
-		piece.addMessage(fmt.Sprintf("%v", err))
+		piece.setStatus(REMOVE, false)
+		piece.addMessage(fmt.Sprintf("%v", err), "")
 	}
 	cs.setResult(piece)
 }
