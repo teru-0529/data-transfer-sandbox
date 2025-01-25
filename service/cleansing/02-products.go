@@ -8,6 +8,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/spec/source/clean"
 	"github.com/teru-0529/data-transfer-sandbox/spec/source/legacy"
@@ -30,14 +31,27 @@ type ProductPiece struct {
 	message     string
 }
 
+// FUNCTION: ステータスの変更
+func (p *ProductPiece) setStatus(status Status, approved bool) {
+	p.status = judgeStatus(p.status, status)
+	p.approved = p.approved && approved
+}
+
+// FUNCTION: メッセージの追加
+func (p *ProductPiece) addMessage(msg string, id string) {
+	p.message = genMessage(p.message, msg, id)
+}
+
 // FUNCTION:
 func NewProducts(conns infra.DbConnection) ProductsClensing {
 	s := time.Now()
 
+	// INFO: 固定値設定
 	cs := ProductsClensing{conns: conns, Result: Result{
 		TableNameJp: "商品",
 		TableNameEn: "products",
 	}}
+	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
 	// PROCESS: 入力データ量
 	cs.setEntryCount()
@@ -53,12 +67,13 @@ func NewProducts(conns infra.DbConnection) ProductsClensing {
 
 	duration := time.Since(s).Seconds()
 	cs.Result.duration = duration
-	log.Printf("cleansing completed [%s] … %3.2fs\n", cs.Result.TableNameEn, duration)
+	log.Printf("cleansing completed … %3.2fs\n", duration)
 	return cs
 }
 
 // FUNCTION: 入力データ量
 func (cs *ProductsClensing) setEntryCount() {
+	// INFO: Legacyテーブル名
 	num, err := legacy.Products().Count(ctx, cs.conns.LegacyDB)
 	if err != nil {
 		log.Fatalln(err)
@@ -68,9 +83,12 @@ func (cs *ProductsClensing) setEntryCount() {
 
 // FUNCTION: データ繰り返し取得(1000件単位で分割)
 func (cs *ProductsClensing) iterate() {
+	bar := pb.Default.Start(cs.Result.EntryCount)
+	bar.SetMaxWidth(80)
 
 	// PROCESS: 1000件単位でのSQL実行に分割する
 	for section := 0; section < cs.Result.sectionCount(); section++ {
+		// INFO: Legacyテーブル名
 		records, err := legacy.Products(qm.Limit(LIMIT), qm.Offset(section*LIMIT)).All(ctx, cs.conns.LegacyDB)
 		if err != nil {
 			log.Fatalln(err)
@@ -81,29 +99,30 @@ func (cs *ProductsClensing) iterate() {
 			piece := cs.checkAndClensing(record)
 			// PROCESS: レコード毎のクレンジング後データ登録
 			cs.saveData(record, piece)
+
+			bar.Increment()
 		}
 	}
+	bar.Finish()
 }
 
 // FUNCTION: レコード毎のチェック
 func (cs *ProductsClensing) checkAndClensing(record *legacy.Product) *ProductPiece {
+	// INFO: piece
 	piece := ProductPiece{
 		ProductName: record.ProductName,
 		status:      NO_CHANGE,
+		approved:    true,
 	}
 
-	// PROCESS: cost_priceが負の数字の場合は、0にクレンジングする。
+	// PROCESS: #2-01: cost_priceが負の数字の場合は、0にクレンジングする。
 	costPrice := record.CostPrice
 
 	if costPrice < 0 {
 		record.CostPrice = 0
 
-		piece.status = MODIFY
-		piece.approved = false
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("● cost_price(商品原価) が負の数。`%d` → `0`(固定値) にクレンジング。", costPrice)
+		piece.setStatus(MODIFY, false)
+		piece.addMessage(fmt.Sprintf("cost_price(商品原価) が負の数。`%d` → `0`(固定値) にクレンジング。", costPrice), "#2-01")
 	}
 
 	return &piece
@@ -118,6 +137,7 @@ func (cs *ProductsClensing) saveData(record *legacy.Product, piece *ProductPiece
 	}
 
 	// PROCESS: データ登録
+	// INFO: cleanテーブル
 	rec := clean.Product{
 		ProductName: record.ProductName,
 		CostPrice:   record.CostPrice,
@@ -128,12 +148,8 @@ func (cs *ProductsClensing) saveData(record *legacy.Product, piece *ProductPiece
 
 	// PROCESS: 登録に失敗した場合は、削除(エラーログを格納、未承認扱い)
 	if err != nil {
-		piece.status = REMOVE
-		piece.approved = false
-		if len(piece.message) != 0 {
-			piece.message += "<BR>"
-		}
-		piece.message += fmt.Sprintf("%v", err)
+		piece.setStatus(REMOVE, false)
+		piece.addMessage(fmt.Sprintf("%v", err), "")
 	}
 	cs.setResult(piece)
 }

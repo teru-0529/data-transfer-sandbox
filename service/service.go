@@ -4,63 +4,70 @@ Copyright © 2024 Teruaki Sato <andrea.pirlo.0529@gmail.com>
 package service
 
 import (
+	"context"
 	"fmt"
-	"os"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/service/cleansing"
+	"github.com/teru-0529/data-transfer-sandbox/spec/source/clean"
+	"github.com/teru-0529/data-transfer-sandbox/spec/source/work"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries"
 )
 
 // TITLE: サービス共通
+
+// STRUCT: ダミーコンテキスト
+var ctx context.Context = context.Background()
 
 // STRUCT: printer(数値をカンマ区切りで出力するために利用)
 var p = message.NewPrinter(language.Japanese)
 
 // FUNCTION: クレンジング
-func Cleansing(file *os.File, conns infra.DbConnection) {
+func Cleansing(conns infra.DbConnection) string {
 
-	var detailMessage string
+	var detailMsg string
 	var num int
 
-	file.WriteString("\n## Legacy Data Check and Cleansing\n\n")
-
-	file.WriteString("  | # | TABLE | ENTRY | ELAPSED | … | UNCHANGE | MODIFY | REMOVE | … | ACCEPT | RATE |\n")
-	file.WriteString("  |--:|---|--:|--:|---|--:|--:|--:|---|--:|--:|\n")
+	msg := "\n## Legacy Data Check and Cleansing\n\n"
+	msg += "  | # | TABLE | ENTRY | ELAPSED | … | UNCHANGE | MODIFY | REMOVE | … | ACCEPT | RATE |\n"
+	msg += "  |--:|---|--:|--:|---|--:|--:|--:|---|--:|--:|\n"
 
 	// PROCESS: 1.operators
 	num++
 	cs1 := cleansing.NewOperators(conns)
-	file.WriteString(cleansingResult(num, cs1.Result))
-	detailMessage += cs1.ShowDetails()
+	msg += cleansingResult(num, cs1.Result)
+	detailMsg += cs1.ShowDetails()
 
 	// PROCESS: 2.products
 	num++
 	cs2 := cleansing.NewProducts(conns)
-	file.WriteString(cleansingResult(num, cs2.Result))
-	detailMessage += cs2.ShowDetails()
+	msg += cleansingResult(num, cs2.Result)
+	detailMsg += cs2.ShowDetails()
 
 	// PROCESS: 3.orders
 	num++
 	cs3 := cleansing.NewOrders(conns)
-	file.WriteString(cleansingResult(num, cs3.Result))
-	detailMessage += cs3.ShowDetails()
+	msg += cleansingResult(num, cs3.Result)
+	detailMsg += cs3.ShowDetails()
 
 	// PROCESS: 3.orders
 	num++
 	cs4 := cleansing.NewOrderDetails(conns)
-	file.WriteString(cleansingResult(num, cs4.Result))
-	detailMessage += cs4.ShowDetails()
+	msg += cleansingResult(num, cs4.Result)
+	detailMsg += cs4.ShowDetails()
 
 	// PROCESS: 詳細メッセージ
-	if len(detailMessage) > 0 {
-		file.WriteString("\n<details><summary>(open) modify and remove detail info</summary>\n")
-		file.WriteString(detailMessage)
-		file.WriteString("\n</details>\n")
+	if len(detailMsg) > 0 {
+		msg += "\n<details><summary>(open) modify and remove detail info</summary>\n"
+		msg += detailMsg
+		msg += "\n</details>\n"
 	}
-	file.WriteString("\n-----\n")
+	msg += "\n-----\n"
+	return msg
 }
 
 // FUNCTION: clensingResult件数
@@ -77,4 +84,24 @@ func cleansingResult(num int, result cleansing.Result) string {
 		p.Sprintf("%d", result.AcceptCount()),
 		result.AcceptRate(),
 	)
+}
+
+// FUNCTION: DumpfileNameの登録
+func RegisterDumpName(conns infra.DbConnection, filename string) {
+	record := work.CleanDB{DumpFileName: filename}
+	record.Upsert(ctx, conns.WorkDB, true, []string{"dump_key"}, boil.Infer(), boil.Infer())
+}
+
+// FUNCTION: cleanDBのテーブルを全てtruncate
+func TruncateCleanDbAll(conns infra.DbConnection) {
+	// INFO: テーブルリスト
+	tables := []string{
+		clean.TableNames.Operators,
+		clean.TableNames.Products,
+		clean.TableNames.Orders,
+		clean.TableNames.OrderDetails,
+	}
+	for _, name := range tables {
+		queries.Raw(fmt.Sprintf("truncate clean.%s CASCADE;", name)).ExecContext(ctx, conns.WorkDB)
+	}
 }

@@ -28,6 +28,6 @@ var versionCmd = &cobra.Command{
 
 // FUNCTION:
 func init() {
-	// INFO:フラグ値を変数にBind
+	// PROCESS:フラグ値を変数にBind
 	versionCmd.Flags().BoolVarP(&full, "full", "F", false, "show with release-date by option flag.")
 }

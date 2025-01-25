@@ -23,16 +23,13 @@ type DbConnection struct {
 }
 
 // FUNCTION: DB setting
-func InitDB() (DbConnection, func()) {
-
-	// PROCESS: envファイルのロード
-	config := LeadEnv()
+func initDB(config *Config) (DbConnection, func()) {
 
 	// PROCESS: Connection作成
 	cons := DbConnection{
 		LegacyDB:  createCon(genMysqlDns(config.LegacyDB)),
-		WorkDB:    createCon(genPsqlDns(config.workDB)),
-		productDB: createCon(genPsqlDns(config.productDB)),
+		WorkDB:    createCon(genPsqlDns(config.WorkDB)),
+		productDB: createCon(genPsqlDns(config.ProductDB)),
 	}
 	return cons, func() {
 		cons.LegacyDB.Close()
@@ -67,23 +64,23 @@ func createCon(dbtype string, dns string) *sql.DB {
 // FUNCTION: psqlDNS
 func genPsqlDns(config DbConfig) (string, string) {
 
-	return "postgres", fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+	return "postgres", fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		config.User,
 		config.Password,
 		config.Host,
 		config.Port,
-		config.Db,
+		config.Database,
 	)
 }
 
 // FUNCTION: mysqlDNS
 func genMysqlDns(config DbConfig) (string, string) {
 
-	return "mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=Asia%%2FTokyo",
+	return "mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=true&loc=Asia%%2FTokyo",
 		config.User,
 		config.Password,
 		config.Host,
 		config.Port,
-		config.Db,
+		config.Database,
 	)
 }

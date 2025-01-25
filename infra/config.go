@@ -15,21 +15,29 @@ import (
 
 // STRUCT:
 type Config struct {
-	LegacyDB  DbConfig
-	workDB    DbConfig
-	productDB DbConfig
+	Base      BaseConfig `envconfig:""`
+	LegacyDB  DbConfig   `envconfig:"LEGACY_MARIADB"`
+	WorkDB    DbConfig   `envconfig:"WORK_POSTGRES"`
+	ProductDB DbConfig   `envconfig:"PRODUCT_POSTGRES"`
 }
 
+// 基本設定
+type BaseConfig struct {
+	LegacyFile string `envconfig:"LEGACY_LOAD_FILE" required:"true"`
+	AppVersion string `envconfig:"APP_VERSION" default:"v0.0.1"`
+}
+
+// データベース接続設定
 type DbConfig struct {
-	User     string
-	Password string
-	Host     string
-	Port     string
-	Db       string
+	User     string `envconfig:"USER" required:"true"`
+	Password string `envconfig:"PASSWORD" required:"true"`
+	Host     string `envconfig:"HOST" default:"localhost"`
+	Port     int    `envconfig:"PORT" required:"true"`
+	Database string `envconfig:"DB" required:"true"`
 }
 
 // FUNCTION:
-func LeadEnv() *Config {
+func LeadConfig() (Config, DbConnection, func()) {
 	// PROCESS: envファイルのロード
 	_, err := os.Stat(".env")
 	if !os.IsNotExist(err) {
@@ -37,23 +45,14 @@ func LeadEnv() *Config {
 		log.Print("loaded environment variables from .env file.")
 	}
 
-	// PROCESS: legacyDB
-	var legacyDB DbConfig
-	if err = envconfig.Process("LEGACY_MARIADB", &legacyDB); err != nil {
+	// PROCESS: オブジェクトに変換
+	var config Config
+	if err = envconfig.Process("", &config); err != nil {
 		log.Fatal(err)
 	}
 
-	// PROCESS: workDB
-	var workDB DbConfig
-	if err = envconfig.Process("WORK_POSTGRES", &workDB); err != nil {
-		log.Fatal(err)
-	}
+	// PROCESS: データベース(Sqlboiler)コネクションの取得
+	conns, cleanUp := initDB(&config)
 
-	// PROCESS: productDB
-	var productDB DbConfig
-	if err = envconfig.Process("PRODUCT_POSTGRES", &productDB); err != nil {
-		log.Fatal(err)
-	}
-
-	return &Config{LegacyDB: legacyDB, workDB: workDB, productDB: productDB}
+	return config, conns, cleanUp
 }
