@@ -43,6 +43,7 @@ archives:
       - LICENSE*
       - README*
       - docs/*
+      - .env
 
 changelog:
   sort: asc

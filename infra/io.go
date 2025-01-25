@@ -13,9 +13,8 @@ import (
 
 // FUNCTION: ファイルへの書き込み（フォルダが無ければ作成する）
 func WriteText(filePath string, msg string) error {
-	dir := filepath.Dir(filePath)
-
 	// PROCESS: フォルダが存在しない場合作成する
+	dir := filepath.Dir(filePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		if err := os.MkdirAll(dir, 0777); err != nil {
 			return fmt.Errorf("cannot create directory: %s", err.Error())

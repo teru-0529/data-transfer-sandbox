@@ -77,17 +77,21 @@
 
 ## 変更履歴
 
+### v0.3.0-rc.1
+
+* リリースモジュールの漏れ対応
+
 ### v0.3.0-rc.0
 
 * cleansing機能完成
 * cleanDBへのLoad機能完成
 
+<details><summary>(open) 過去の更新履歴</summary>
+
 ### v0.2.0
 
 * maigration実行ログの出力
 * 移行元データの件数表示
-
-<details><summary>(open) 過去の更新履歴</summary>
 
 ### v0.1.0
 
