@@ -39,10 +39,11 @@ func (p *OrderDetailPiece) addMessage(msg string, id string) {
 
 // STRUCT:
 type OrderDetailsClensing struct {
-	conns   infra.DbConnection
-	refData *RefData
-	Result  Result
-	Details []*OrderDetailPiece
+	conns     infra.DbConnection
+	refData   *RefData
+	Result    Result
+	Details   []*OrderDetailPiece
+	generator *OrderNoGenerator
 }
 
 // FUNCTION:
@@ -51,9 +52,10 @@ func NewOrderDetails(conns infra.DbConnection, refData *RefData) OrderDetailsCle
 
 	// INFO: 固定値設定
 	cs := OrderDetailsClensing{
-		conns:   conns,
-		refData: refData,
-		Result:  Result{TableNameJp: "受注明細", TableNameEn: "order_details"},
+		conns:     conns,
+		refData:   refData,
+		Result:    Result{TableNameJp: "受注明細", TableNameEn: "order_details"},
+		generator: NewOrderNoGenerator(),
 	}
 	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
@@ -152,6 +154,9 @@ func (cs *OrderDetailsClensing) saveData(record *legacy.OrderDetail, piece *Orde
 		return
 	}
 
+	// INFO: 受注番号の採番
+	wOrderNo := cs.generator.generate(record.OrderNo, record.ProductName, record.SellingPrice, record.CostPrice)
+
 	// PROCESS: データ登録
 	// INFO: cleanテーブル
 	rec := clean.OrderDetail{
@@ -163,7 +168,7 @@ func (cs *OrderDetailsClensing) saveData(record *legacy.OrderDetail, piece *Orde
 		CancelFlag:        record.CanceledFlag,
 		SellingPrice:      record.SellingPrice,
 		CostPrice:         record.CostPrice,
-		WOrderNo:          "RO-9000001", //FIXME: 固定値ダミー
+		WOrderNo:          wOrderNo,
 		CreatedBy:         OPERATION_USER,
 		UpdatedBy:         OPERATION_USER,
 	}
@@ -214,4 +219,55 @@ func (cs *OrderDetailsClensing) ShowDetails() string {
 	}
 
 	return msg
+}
+
+// STRUCT: 受注番号ジェネレータ
+type OrderNoGenerator struct {
+	OrderNoMap    map[OrderNoGenKey]string //受注番号
+	OrderCountMap map[OrderNoCountKey]int  //商品ごとの受注番号数
+}
+
+type OrderNoGenKey struct {
+	orderNo      int
+	productName  string
+	sellingPrice int
+	costPrice    int
+}
+type OrderNoCountKey struct {
+	orderNo     int
+	productName string
+}
+
+// FUNCTION: generatorの生成
+func NewOrderNoGenerator() *OrderNoGenerator {
+	return &OrderNoGenerator{
+		OrderNoMap:    map[OrderNoGenKey]string{},
+		OrderCountMap: map[OrderNoCountKey]int{},
+	}
+}
+
+// FUNCTION: 受注番号の採番
+func (gen *OrderNoGenerator) generate(orderNo int, productName string, sellingPrice int, costPrice int) string {
+	genKey := OrderNoGenKey{orderNo: orderNo, productName: productName, sellingPrice: sellingPrice, costPrice: costPrice}
+	countKey := OrderNoCountKey{orderNo: orderNo, productName: productName}
+	_ = countKey
+	// PROCESS: すでに管理されている場合は該当する受注番号を返す
+	result, exist := gen.OrderNoMap[genKey]
+	if exist {
+		return result
+	}
+
+	// PROCESS: シーケンス番号を取得(存在しない場合は0)
+	no, exist := gen.OrderCountMap[countKey]
+	if !exist {
+		gen.OrderCountMap[countKey] = 0
+		no = 0
+	}
+
+	// PROCESS: 受注番号を構成しMapに格納
+	result = fmt.Sprintf("RO-9%05d%d", orderNo, no)
+	gen.OrderNoMap[genKey] = result
+	gen.OrderCountMap[countKey]++
+
+	return result
 }
