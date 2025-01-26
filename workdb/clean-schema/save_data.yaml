@@ -1,6 +1,6 @@
 data_type: define_tables
 version: 3.2.7
-create_at: 2025-01-20T21:22:06+09:00
+create_at: 2025-01-26T18:52:06+09:00
 schema:
   name_jp: クリーンテーブル
   name_en: clean
@@ -34,10 +34,16 @@ tables:
       - name: 商品原価
         nullable: false
         default: null
+      - name: 商品ID(WORK)
+        nullable: false
+        default: null
     constraint:
       primary_key:
         - 商品名
-      uniques: []
+      uniques:
+        - name: products_unique_1
+          fields:
+            - 商品ID(WORK)
       foreign_keys: []
     indexes: []
   - name_jp: 受注
@@ -97,6 +103,24 @@ tables:
       - name: 商品原価
         nullable: false
         default: null
+      - name: 受注番号(WORK)
+        nullable: false
+        default: null
+      - name: 出荷済数(WORK)
+        nullable: false
+        default: "0"
+      - name: キャンセル数(WORK)
+        nullable: false
+        default: "0"
+      - name: 受注残数(WORK)
+        nullable: false
+        default: "0"
+      - name: 受注金額(WORK)
+        nullable: false
+        default: "0"
+      - name: 受注残額(WORK)
+        nullable: false
+        default: "0"
     constraint:
       primary_key:
         - 受注番号

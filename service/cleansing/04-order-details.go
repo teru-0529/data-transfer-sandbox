@@ -160,6 +160,7 @@ func (cs *OrderDetailsClensing) saveData(record *legacy.OrderDetail, piece *Orde
 		CancelFlag:        record.CanceledFlag,
 		SellingPrice:      record.SellingPrice,
 		CostPrice:         record.CostPrice,
+		WOrderNo:          "RO-9000001", //FIXME:
 		CreatedBy:         OPERATION_USER,
 		UpdatedBy:         OPERATION_USER,
 	}

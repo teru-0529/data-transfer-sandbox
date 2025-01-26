@@ -4,11 +4,7 @@
 package work
 
 var TableNames = struct {
-	CleanDB      string
-	GenOrderNo   string
-	GenProductID string
+	CleanDB string
 }{
-	CleanDB:      "clean_db",
-	GenOrderNo:   "gen_order_no",
-	GenProductID: "gen_product_id",
+	CleanDB: "clean_db",
 }

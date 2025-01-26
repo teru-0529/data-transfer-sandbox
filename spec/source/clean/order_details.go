@@ -39,6 +39,18 @@ type OrderDetail struct { // 受注番号
 	SellingPrice int `boil:"selling_price" json:"selling_price" toml:"selling_price" yaml:"selling_price"`
 	// 商品原価
 	CostPrice int `boil:"cost_price" json:"cost_price" toml:"cost_price" yaml:"cost_price"`
+	// 受注番号(WORK)
+	WOrderNo string `boil:"w_order_no" json:"w_order_no" toml:"w_order_no" yaml:"w_order_no"`
+	// 出荷済数(WORK)
+	WShippingQuantity int `boil:"w_shipping_quantity" json:"w_shipping_quantity" toml:"w_shipping_quantity" yaml:"w_shipping_quantity"`
+	// キャンセル数(WORK)
+	WCancelQuantity int `boil:"w_cancel_quantity" json:"w_cancel_quantity" toml:"w_cancel_quantity" yaml:"w_cancel_quantity"`
+	// 受注残数(WORK)
+	WRemainingQuantity int `boil:"w_remaining_quantity" json:"w_remaining_quantity" toml:"w_remaining_quantity" yaml:"w_remaining_quantity"`
+	// 受注金額(WORK)
+	WTotalOrderPrice int `boil:"w_total_order_price" json:"w_total_order_price" toml:"w_total_order_price" yaml:"w_total_order_price"`
+	// 受注残額(WORK)
+	WRemainingOrderPrice int `boil:"w_remaining_order_price" json:"w_remaining_order_price" toml:"w_remaining_order_price" yaml:"w_remaining_order_price"`
 	// 作成日時
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	// 更新日時
@@ -53,59 +65,83 @@ type OrderDetail struct { // 受注番号
 }
 
 var OrderDetailColumns = struct {
-	OrderNo           string
-	OrderDetailNo     string
-	ProductName       string
-	ReceivingQuantity string
-	ShippingFlag      string
-	CancelFlag        string
-	SellingPrice      string
-	CostPrice         string
-	CreatedAt         string
-	UpdatedAt         string
-	CreatedBy         string
-	UpdatedBy         string
+	OrderNo              string
+	OrderDetailNo        string
+	ProductName          string
+	ReceivingQuantity    string
+	ShippingFlag         string
+	CancelFlag           string
+	SellingPrice         string
+	CostPrice            string
+	WOrderNo             string
+	WShippingQuantity    string
+	WCancelQuantity      string
+	WRemainingQuantity   string
+	WTotalOrderPrice     string
+	WRemainingOrderPrice string
+	CreatedAt            string
+	UpdatedAt            string
+	CreatedBy            string
+	UpdatedBy            string
 }{
-	OrderNo:           "order_no",
-	OrderDetailNo:     "order_detail_no",
-	ProductName:       "product_name",
-	ReceivingQuantity: "receiving_quantity",
-	ShippingFlag:      "shipping_flag",
-	CancelFlag:        "cancel_flag",
-	SellingPrice:      "selling_price",
-	CostPrice:         "cost_price",
-	CreatedAt:         "created_at",
-	UpdatedAt:         "updated_at",
-	CreatedBy:         "created_by",
-	UpdatedBy:         "updated_by",
+	OrderNo:              "order_no",
+	OrderDetailNo:        "order_detail_no",
+	ProductName:          "product_name",
+	ReceivingQuantity:    "receiving_quantity",
+	ShippingFlag:         "shipping_flag",
+	CancelFlag:           "cancel_flag",
+	SellingPrice:         "selling_price",
+	CostPrice:            "cost_price",
+	WOrderNo:             "w_order_no",
+	WShippingQuantity:    "w_shipping_quantity",
+	WCancelQuantity:      "w_cancel_quantity",
+	WRemainingQuantity:   "w_remaining_quantity",
+	WTotalOrderPrice:     "w_total_order_price",
+	WRemainingOrderPrice: "w_remaining_order_price",
+	CreatedAt:            "created_at",
+	UpdatedAt:            "updated_at",
+	CreatedBy:            "created_by",
+	UpdatedBy:            "updated_by",
 }
 
 var OrderDetailTableColumns = struct {
-	OrderNo           string
-	OrderDetailNo     string
-	ProductName       string
-	ReceivingQuantity string
-	ShippingFlag      string
-	CancelFlag        string
-	SellingPrice      string
-	CostPrice         string
-	CreatedAt         string
-	UpdatedAt         string
-	CreatedBy         string
-	UpdatedBy         string
+	OrderNo              string
+	OrderDetailNo        string
+	ProductName          string
+	ReceivingQuantity    string
+	ShippingFlag         string
+	CancelFlag           string
+	SellingPrice         string
+	CostPrice            string
+	WOrderNo             string
+	WShippingQuantity    string
+	WCancelQuantity      string
+	WRemainingQuantity   string
+	WTotalOrderPrice     string
+	WRemainingOrderPrice string
+	CreatedAt            string
+	UpdatedAt            string
+	CreatedBy            string
+	UpdatedBy            string
 }{
-	OrderNo:           "order_details.order_no",
-	OrderDetailNo:     "order_details.order_detail_no",
-	ProductName:       "order_details.product_name",
-	ReceivingQuantity: "order_details.receiving_quantity",
-	ShippingFlag:      "order_details.shipping_flag",
-	CancelFlag:        "order_details.cancel_flag",
-	SellingPrice:      "order_details.selling_price",
-	CostPrice:         "order_details.cost_price",
-	CreatedAt:         "order_details.created_at",
-	UpdatedAt:         "order_details.updated_at",
-	CreatedBy:         "order_details.created_by",
-	UpdatedBy:         "order_details.updated_by",
+	OrderNo:              "order_details.order_no",
+	OrderDetailNo:        "order_details.order_detail_no",
+	ProductName:          "order_details.product_name",
+	ReceivingQuantity:    "order_details.receiving_quantity",
+	ShippingFlag:         "order_details.shipping_flag",
+	CancelFlag:           "order_details.cancel_flag",
+	SellingPrice:         "order_details.selling_price",
+	CostPrice:            "order_details.cost_price",
+	WOrderNo:             "order_details.w_order_no",
+	WShippingQuantity:    "order_details.w_shipping_quantity",
+	WCancelQuantity:      "order_details.w_cancel_quantity",
+	WRemainingQuantity:   "order_details.w_remaining_quantity",
+	WTotalOrderPrice:     "order_details.w_total_order_price",
+	WRemainingOrderPrice: "order_details.w_remaining_order_price",
+	CreatedAt:            "order_details.created_at",
+	UpdatedAt:            "order_details.updated_at",
+	CreatedBy:            "order_details.created_by",
+	UpdatedBy:            "order_details.updated_by",
 }
 
 // Generated where
@@ -143,31 +179,43 @@ func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field
 func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
 var OrderDetailWhere = struct {
-	OrderNo           whereHelperint
-	OrderDetailNo     whereHelperint
-	ProductName       whereHelperstring
-	ReceivingQuantity whereHelperint
-	ShippingFlag      whereHelperbool
-	CancelFlag        whereHelperbool
-	SellingPrice      whereHelperint
-	CostPrice         whereHelperint
-	CreatedAt         whereHelpertime_Time
-	UpdatedAt         whereHelpertime_Time
-	CreatedBy         whereHelpernull_String
-	UpdatedBy         whereHelpernull_String
+	OrderNo              whereHelperint
+	OrderDetailNo        whereHelperint
+	ProductName          whereHelperstring
+	ReceivingQuantity    whereHelperint
+	ShippingFlag         whereHelperbool
+	CancelFlag           whereHelperbool
+	SellingPrice         whereHelperint
+	CostPrice            whereHelperint
+	WOrderNo             whereHelperstring
+	WShippingQuantity    whereHelperint
+	WCancelQuantity      whereHelperint
+	WRemainingQuantity   whereHelperint
+	WTotalOrderPrice     whereHelperint
+	WRemainingOrderPrice whereHelperint
+	CreatedAt            whereHelpertime_Time
+	UpdatedAt            whereHelpertime_Time
+	CreatedBy            whereHelpernull_String
+	UpdatedBy            whereHelpernull_String
 }{
-	OrderNo:           whereHelperint{field: "\"clean\".\"order_details\".\"order_no\""},
-	OrderDetailNo:     whereHelperint{field: "\"clean\".\"order_details\".\"order_detail_no\""},
-	ProductName:       whereHelperstring{field: "\"clean\".\"order_details\".\"product_name\""},
-	ReceivingQuantity: whereHelperint{field: "\"clean\".\"order_details\".\"receiving_quantity\""},
-	ShippingFlag:      whereHelperbool{field: "\"clean\".\"order_details\".\"shipping_flag\""},
-	CancelFlag:        whereHelperbool{field: "\"clean\".\"order_details\".\"cancel_flag\""},
-	SellingPrice:      whereHelperint{field: "\"clean\".\"order_details\".\"selling_price\""},
-	CostPrice:         whereHelperint{field: "\"clean\".\"order_details\".\"cost_price\""},
-	CreatedAt:         whereHelpertime_Time{field: "\"clean\".\"order_details\".\"created_at\""},
-	UpdatedAt:         whereHelpertime_Time{field: "\"clean\".\"order_details\".\"updated_at\""},
-	CreatedBy:         whereHelpernull_String{field: "\"clean\".\"order_details\".\"created_by\""},
-	UpdatedBy:         whereHelpernull_String{field: "\"clean\".\"order_details\".\"updated_by\""},
+	OrderNo:              whereHelperint{field: "\"clean\".\"order_details\".\"order_no\""},
+	OrderDetailNo:        whereHelperint{field: "\"clean\".\"order_details\".\"order_detail_no\""},
+	ProductName:          whereHelperstring{field: "\"clean\".\"order_details\".\"product_name\""},
+	ReceivingQuantity:    whereHelperint{field: "\"clean\".\"order_details\".\"receiving_quantity\""},
+	ShippingFlag:         whereHelperbool{field: "\"clean\".\"order_details\".\"shipping_flag\""},
+	CancelFlag:           whereHelperbool{field: "\"clean\".\"order_details\".\"cancel_flag\""},
+	SellingPrice:         whereHelperint{field: "\"clean\".\"order_details\".\"selling_price\""},
+	CostPrice:            whereHelperint{field: "\"clean\".\"order_details\".\"cost_price\""},
+	WOrderNo:             whereHelperstring{field: "\"clean\".\"order_details\".\"w_order_no\""},
+	WShippingQuantity:    whereHelperint{field: "\"clean\".\"order_details\".\"w_shipping_quantity\""},
+	WCancelQuantity:      whereHelperint{field: "\"clean\".\"order_details\".\"w_cancel_quantity\""},
+	WRemainingQuantity:   whereHelperint{field: "\"clean\".\"order_details\".\"w_remaining_quantity\""},
+	WTotalOrderPrice:     whereHelperint{field: "\"clean\".\"order_details\".\"w_total_order_price\""},
+	WRemainingOrderPrice: whereHelperint{field: "\"clean\".\"order_details\".\"w_remaining_order_price\""},
+	CreatedAt:            whereHelpertime_Time{field: "\"clean\".\"order_details\".\"created_at\""},
+	UpdatedAt:            whereHelpertime_Time{field: "\"clean\".\"order_details\".\"updated_at\""},
+	CreatedBy:            whereHelpernull_String{field: "\"clean\".\"order_details\".\"created_by\""},
+	UpdatedBy:            whereHelpernull_String{field: "\"clean\".\"order_details\".\"updated_by\""},
 }
 
 // OrderDetailRels is where relationship names are stored.
@@ -208,9 +256,9 @@ func (r *orderDetailR) GetProductNameProduct() *Product {
 type orderDetailL struct{}
 
 var (
-	orderDetailAllColumns            = []string{"order_no", "order_detail_no", "product_name", "receiving_quantity", "shipping_flag", "cancel_flag", "selling_price", "cost_price", "created_at", "updated_at", "created_by", "updated_by"}
-	orderDetailColumnsWithoutDefault = []string{"order_no", "order_detail_no", "product_name", "receiving_quantity", "shipping_flag", "cancel_flag", "selling_price", "cost_price"}
-	orderDetailColumnsWithDefault    = []string{"created_at", "updated_at", "created_by", "updated_by"}
+	orderDetailAllColumns            = []string{"order_no", "order_detail_no", "product_name", "receiving_quantity", "shipping_flag", "cancel_flag", "selling_price", "cost_price", "w_order_no", "w_shipping_quantity", "w_cancel_quantity", "w_remaining_quantity", "w_total_order_price", "w_remaining_order_price", "created_at", "updated_at", "created_by", "updated_by"}
+	orderDetailColumnsWithoutDefault = []string{"order_no", "order_detail_no", "product_name", "receiving_quantity", "shipping_flag", "cancel_flag", "selling_price", "cost_price", "w_order_no"}
+	orderDetailColumnsWithDefault    = []string{"w_shipping_quantity", "w_cancel_quantity", "w_remaining_quantity", "w_total_order_price", "w_remaining_order_price", "created_at", "updated_at", "created_by", "updated_by"}
 	orderDetailPrimaryKeyColumns     = []string{"order_no", "order_detail_no"}
 	orderDetailGeneratedColumns      = []string{}
 )

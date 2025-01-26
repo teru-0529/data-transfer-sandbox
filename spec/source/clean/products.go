@@ -27,6 +27,8 @@ type Product struct { // 商品名
 	ProductName string `boil:"product_name" json:"product_name" toml:"product_name" yaml:"product_name"`
 	// 商品原価
 	CostPrice int `boil:"cost_price" json:"cost_price" toml:"cost_price" yaml:"cost_price"`
+	// 商品ID(WORK)
+	WProductID string `boil:"w_product_id" json:"w_product_id" toml:"w_product_id" yaml:"w_product_id"`
 	// 作成日時
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	// 更新日時
@@ -43,6 +45,7 @@ type Product struct { // 商品名
 var ProductColumns = struct {
 	ProductName string
 	CostPrice   string
+	WProductID  string
 	CreatedAt   string
 	UpdatedAt   string
 	CreatedBy   string
@@ -50,6 +53,7 @@ var ProductColumns = struct {
 }{
 	ProductName: "product_name",
 	CostPrice:   "cost_price",
+	WProductID:  "w_product_id",
 	CreatedAt:   "created_at",
 	UpdatedAt:   "updated_at",
 	CreatedBy:   "created_by",
@@ -59,6 +63,7 @@ var ProductColumns = struct {
 var ProductTableColumns = struct {
 	ProductName string
 	CostPrice   string
+	WProductID  string
 	CreatedAt   string
 	UpdatedAt   string
 	CreatedBy   string
@@ -66,6 +71,7 @@ var ProductTableColumns = struct {
 }{
 	ProductName: "products.product_name",
 	CostPrice:   "products.cost_price",
+	WProductID:  "products.w_product_id",
 	CreatedAt:   "products.created_at",
 	UpdatedAt:   "products.updated_at",
 	CreatedBy:   "products.created_by",
@@ -77,6 +83,7 @@ var ProductTableColumns = struct {
 var ProductWhere = struct {
 	ProductName whereHelperstring
 	CostPrice   whereHelperint
+	WProductID  whereHelperstring
 	CreatedAt   whereHelpertime_Time
 	UpdatedAt   whereHelpertime_Time
 	CreatedBy   whereHelpernull_String
@@ -84,6 +91,7 @@ var ProductWhere = struct {
 }{
 	ProductName: whereHelperstring{field: "\"clean\".\"products\".\"product_name\""},
 	CostPrice:   whereHelperint{field: "\"clean\".\"products\".\"cost_price\""},
+	WProductID:  whereHelperstring{field: "\"clean\".\"products\".\"w_product_id\""},
 	CreatedAt:   whereHelpertime_Time{field: "\"clean\".\"products\".\"created_at\""},
 	UpdatedAt:   whereHelpertime_Time{field: "\"clean\".\"products\".\"updated_at\""},
 	CreatedBy:   whereHelpernull_String{field: "\"clean\".\"products\".\"created_by\""},
@@ -118,8 +126,8 @@ func (r *productR) GetProductNameOrderDetails() OrderDetailSlice {
 type productL struct{}
 
 var (
-	productAllColumns            = []string{"product_name", "cost_price", "created_at", "updated_at", "created_by", "updated_by"}
-	productColumnsWithoutDefault = []string{"product_name", "cost_price"}
+	productAllColumns            = []string{"product_name", "cost_price", "w_product_id", "created_at", "updated_at", "created_by", "updated_by"}
+	productColumnsWithoutDefault = []string{"product_name", "cost_price", "w_product_id"}
 	productColumnsWithDefault    = []string{"created_at", "updated_at", "created_by", "updated_by"}
 	productPrimaryKeyColumns     = []string{"product_name"}
 	productGeneratedColumns      = []string{}

@@ -33,12 +33,19 @@
 | -- | -- | -- | -- | -- | -- |
 | 1 | 商品名(product_name) | varchar(30) | true |  |  |
 | 2 | 商品原価(cost_price) | integer | true |  | (cost_price >= 0) |
+| 3 | 商品ID(WORK)(w_product_id) | varchar(5) | true |  | (w_product_id ~* '^P[0-9]{4}$') |
 
 ### Constraints
 
 #### Primary Key
 
 * 商品名(product_name)
+
+#### Uniques
+
+#### products_unique_1
+
+* 商品ID(WORK)(w_product_id)
 
 ----------
 
@@ -87,6 +94,12 @@
 | 6 | キャンセルフラグ(cancel_flag) | boolean | true |  |  |
 | 7 | 販売単価(selling_price) | integer | true |  | (selling_price >= 0) |
 | 8 | 商品原価(cost_price) | integer | true |  | (cost_price >= 0) |
+| 9 | 受注番号(WORK)(w_order_no) | varchar(10) | true |  | (w_order_no ~* '^RO-[0-9]{7}$') |
+| 10 | 出荷済数(WORK)(w_shipping_quantity) | integer | true | 0 | (w_shipping_quantity >= 0) |
+| 11 | キャンセル数(WORK)(w_cancel_quantity) | integer | true | 0 | (w_cancel_quantity >= 0) |
+| 12 | 受注残数(WORK)(w_remaining_quantity) | integer | true | 0 | (w_remaining_quantity >= 0) |
+| 13 | 受注金額(WORK)(w_total_order_price) | integer | true | 0 | (w_total_order_price >= 0) |
+| 14 | 受注残額(WORK)(w_remaining_order_price) | integer | true | 0 | (w_remaining_order_price >= 0) |
 
 ### Constraints
 
