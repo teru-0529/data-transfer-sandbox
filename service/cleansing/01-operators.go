@@ -131,8 +131,8 @@ func (cs *OperatorClensing) checkAndClensing(record *legacy.Operator) *OperatorP
 	}
 
 	// PROCESS: #1-01: 担当者のユニークチェック、すでに担当者名が存在する場合、移行対象から除外する。
-	_, ok := cs.keys[record.OperatorName]
-	if ok {
+	_, exist := cs.keys[record.OperatorName]
+	if exist {
 		piece.setStatus(REMOVE, true)
 		piece.addMessage(
 			fmt.Sprintf("operator_name(担当者名) がユニーク制約に違反。移行対象から除外 `%s` 。", record.OperatorName),
