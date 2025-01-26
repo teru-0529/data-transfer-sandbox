@@ -66,14 +66,11 @@
 
 ## クレンジング仕様
 
-* [仕様書はこちら](docs/clean-db.md)
+* [仕様書はこちら](docs/cleansing-spec.md)
 
 ## 移行変換仕様
 
-<!-- * [移行元DBレイアウト](docs/source-db.md) -->
-
-> [!NOTE]
-> TBD.
+* [仕様書はこちら](docs/transfer-spec.md)
 
 ## 変更履歴
 
