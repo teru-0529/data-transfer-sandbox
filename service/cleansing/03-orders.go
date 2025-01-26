@@ -172,6 +172,9 @@ func (cs *OrdersClensing) saveData(record *legacy.Order, piece *OrderPiece) {
 	if err != nil {
 		piece.setStatus(REMOVE, false)
 		piece.addMessage(fmt.Sprintf("%v", err), "")
+	} else {
+		// INFO: [受注番号]登録
+		cs.refData.OrderNoSet[record.OrderNo] = struct{}{}
 	}
 	cs.setResult(piece)
 }

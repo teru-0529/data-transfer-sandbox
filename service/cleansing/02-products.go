@@ -18,12 +18,6 @@ import (
 )
 
 // STRUCT:
-type ProductsClensing struct {
-	conns   infra.DbConnection
-	Result  Result
-	Details []*ProductPiece
-}
-
 type ProductPiece struct {
 	ProductName string
 	status      Status
@@ -42,15 +36,24 @@ func (p *ProductPiece) addMessage(msg string, id string) {
 	p.message = genMessage(p.message, msg, id)
 }
 
+// STRUCT:
+type ProductsClensing struct {
+	conns   infra.DbConnection
+	refData *RefData
+	Result  Result
+	Details []*ProductPiece
+}
+
 // FUNCTION:
-func NewProducts(conns infra.DbConnection) ProductsClensing {
+func NewProducts(conns infra.DbConnection, refData *RefData) ProductsClensing {
 	s := time.Now()
 
 	// INFO: 固定値設定
-	cs := ProductsClensing{conns: conns, Result: Result{
-		TableNameJp: "商品",
-		TableNameEn: "products",
-	}}
+	cs := ProductsClensing{
+		conns:   conns,
+		refData: refData,
+		Result:  Result{TableNameJp: "商品", TableNameEn: "products"},
+	}
 	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
 	// PROCESS: 入力データ量
@@ -158,6 +161,9 @@ func (cs *ProductsClensing) saveData(record *legacy.Product, piece *ProductPiece
 	if err != nil {
 		piece.setStatus(REMOVE, false)
 		piece.addMessage(fmt.Sprintf("%v", err), "")
+	} else {
+		// INFO: [商品名]登録
+		cs.refData.ProductNameSet[record.ProductName] = struct{}{}
 	}
 	cs.setResult(piece)
 }

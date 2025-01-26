@@ -123,11 +123,15 @@ func (r Result) Elapsed() float64 {
 // STRUCT: リファレンスデータ
 type RefData struct {
 	OperatorNameSet map[string]struct{} //担当者名
+	ProductNameSet  map[string]struct{} //商品名
+	OrderNoSet      map[int]struct{}    //受注番号
 }
 
 // FUNCTION: リファレンスデータの作成
 func NewRefData() *RefData {
 	return &RefData{
 		OperatorNameSet: map[string]struct{}{},
+		ProductNameSet:  map[string]struct{}{},
+		OrderNoSet:      map[int]struct{}{},
 	}
 }

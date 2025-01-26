@@ -45,7 +45,7 @@ func Cleansing(conns infra.DbConnection) string {
 
 	// PROCESS: 2.products
 	num++
-	cs2 := cleansing.NewProducts(conns)
+	cs2 := cleansing.NewProducts(conns, refData)
 	msg += cleansingResult(num, cs2.Result)
 	detailMsg += cs2.ShowDetails()
 
@@ -57,7 +57,7 @@ func Cleansing(conns infra.DbConnection) string {
 
 	// PROCESS: 3.orders
 	num++
-	cs4 := cleansing.NewOrderDetails(conns)
+	cs4 := cleansing.NewOrderDetails(conns, refData)
 	msg += cleansingResult(num, cs4.Result)
 	detailMsg += cs4.ShowDetails()
 

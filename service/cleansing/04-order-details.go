@@ -18,12 +18,6 @@ import (
 )
 
 // STRUCT:
-type OrderDetailsClensing struct {
-	conns   infra.DbConnection
-	Result  Result
-	Details []*OrderDetailPiece
-}
-
 type OrderDetailPiece struct {
 	OrderNo       int
 	OrderDetailNo int
@@ -43,15 +37,24 @@ func (p *OrderDetailPiece) addMessage(msg string, id string) {
 	p.message = genMessage(p.message, msg, id)
 }
 
+// STRUCT:
+type OrderDetailsClensing struct {
+	conns   infra.DbConnection
+	refData *RefData
+	Result  Result
+	Details []*OrderDetailPiece
+}
+
 // FUNCTION:
-func NewOrderDetails(conns infra.DbConnection) OrderDetailsClensing {
+func NewOrderDetails(conns infra.DbConnection, refData *RefData) OrderDetailsClensing {
 	s := time.Now()
 
 	// INFO: 固定値設定
-	cs := OrderDetailsClensing{conns: conns, Result: Result{
-		TableNameJp: "受注明細",
-		TableNameEn: "order_details",
-	}}
+	cs := OrderDetailsClensing{
+		conns:   conns,
+		refData: refData,
+		Result:  Result{TableNameJp: "受注明細", TableNameEn: "order_details"},
+	}
 	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
 	// PROCESS: 入力データ量
@@ -124,16 +127,16 @@ func (cs *OrderDetailsClensing) checkAndClensing(record *legacy.OrderDetail) *Or
 	}
 
 	// PROCESS: #4-02: order_noが[受注]に存在しない場合、移行対象から除外する。
-	ok1, _ := legacy.OrderExists(ctx, cs.conns.LegacyDB, record.OrderNo)
-	if !ok1 {
+	_, exist1 := cs.refData.OrderNoSet[record.OrderNo]
+	if !exist1 {
 		piece.setStatus(REMOVE, false)
 		piece.addMessage(fmt.Sprintf("order_no(受注番号) が[受注]に存在しない。移行対象から除外 `%d`。", record.OrderNo), "#4-02")
 	}
 
 	// PROCESS: #4-03: product_nameが[商品]に存在しない場合、移行対象から除外する。
 	// TODO: クレンジング処理未記載の状況際限のためコメントアウト
-	// ok2, _ := legacy.ProductExists(ctx, cs.conns.LegacyDB, record.ProductName)
-	// if !ok2 {
+	// _, exist2 := cs.refData.ProductNameSet[record.ProductName]
+	// if !exist2 {
 	// 	piece.setStatus(REMOVE, true)
 	// 	piece.addMessage(fmt.Sprintf("product_name(商品名) が[商品]に存在しない。移行対象から除外 `%s`。", record.ProductName), "#4-03")
 	// }
@@ -160,7 +163,7 @@ func (cs *OrderDetailsClensing) saveData(record *legacy.OrderDetail, piece *Orde
 		CancelFlag:        record.CanceledFlag,
 		SellingPrice:      record.SellingPrice,
 		CostPrice:         record.CostPrice,
-		WOrderNo:          "RO-9000001", //FIXME:
+		WOrderNo:          "RO-9000001", //FIXME: 固定値ダミー
 		CreatedBy:         OPERATION_USER,
 		UpdatedBy:         OPERATION_USER,
 	}
