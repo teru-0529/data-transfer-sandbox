@@ -62,6 +62,12 @@ func NewProducts(conns infra.DbConnection) ProductsClensing {
 		log.Fatalln(err)
 	}
 
+	// INFO: クレンジング先のシーケンスリセット(EXT)
+	sql := "SELECT SETVAL ('clean.product_id_seed', 1, false);"
+	_, err = queries.Raw(sql).ExecContext(ctx, cs.conns.WorkDB)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	// PROCESS: 1行ごと処理
 	cs.iterate()
 
@@ -89,7 +95,9 @@ func (cs *ProductsClensing) iterate() {
 	// PROCESS: 1000件単位でのSQL実行に分割する
 	for section := 0; section < cs.Result.sectionCount(); section++ {
 		// INFO: Legacyテーブル名
-		records, err := legacy.Products(qm.Limit(LIMIT), qm.Offset(section*LIMIT)).All(ctx, cs.conns.LegacyDB)
+		// INFO: 商品名:昇順
+		records, err := legacy.Products(
+			qm.Limit(LIMIT), qm.Offset(section*LIMIT), qm.OrderBy("product_name ASC")).All(ctx, cs.conns.LegacyDB)
 		if err != nil {
 			log.Fatalln(err)
 		}
