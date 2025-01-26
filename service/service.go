@@ -31,6 +31,7 @@ func Cleansing(conns infra.DbConnection) string {
 
 	var detailMsg string
 	var num int
+	refData := cleansing.NewRefData()
 
 	msg := "\n## Legacy Data Check and Cleansing\n\n"
 	msg += "  | # | TABLE | ENTRY | ELAPSED | … | UNCHANGE | MODIFY | REMOVE | … | ACCEPT | RATE |\n"
@@ -38,7 +39,7 @@ func Cleansing(conns infra.DbConnection) string {
 
 	// PROCESS: 1.operators
 	num++
-	cs1 := cleansing.NewOperators(conns)
+	cs1 := cleansing.NewOperators(conns, refData)
 	msg += cleansingResult(num, cs1.Result)
 	detailMsg += cs1.ShowDetails()
 
@@ -50,7 +51,7 @@ func Cleansing(conns infra.DbConnection) string {
 
 	// PROCESS: 3.orders
 	num++
-	cs3 := cleansing.NewOrders(conns)
+	cs3 := cleansing.NewOrders(conns, refData)
 	msg += cleansingResult(num, cs3.Result)
 	detailMsg += cs3.ShowDetails()
 

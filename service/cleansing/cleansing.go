@@ -32,7 +32,7 @@ const NO_CHANGE Status = "⭕"
 const MODIFY Status = "⚠<br>MODIFY"
 const REMOVE Status = "⛔<br>REMOVE"
 
-// STRUCT:
+// STRUCT: クレンジング結果
 type Result struct {
 	TableNameJp   string
 	TableNameEn   string
@@ -118,4 +118,16 @@ func (r Result) sectionCount() int {
 func (r Result) Elapsed() float64 {
 	// 小数点3位で四捨五入
 	return math.Round(r.duration*100) / 100
+}
+
+// STRUCT: リファレンスデータ
+type RefData struct {
+	OperatorNameSet map[string]struct{} //担当者名
+}
+
+// FUNCTION: リファレンスデータの作成
+func NewRefData() *RefData {
+	return &RefData{
+		OperatorNameSet: map[string]struct{}{},
+	}
 }

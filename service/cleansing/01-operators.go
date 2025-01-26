@@ -19,13 +19,6 @@ import (
 )
 
 // STRUCT:
-type OperatorClensing struct {
-	conns   infra.DbConnection
-	Result  Result
-	Details []*OperatorPiece
-	keys    map[string]struct{}
-}
-
 type OperatorPiece struct {
 	OperatorId string
 	status     Status
@@ -44,18 +37,25 @@ func (p *OperatorPiece) addMessage(msg string, id string) {
 	p.message = genMessage(p.message, msg, id)
 }
 
+// STRUCT:
+type OperatorClensing struct {
+	conns   infra.DbConnection
+	refData *RefData
+	Result  Result
+	Details []*OperatorPiece
+	keys    map[string]struct{}
+}
+
 // FUNCTION:
-func NewOperators(conns infra.DbConnection) OperatorClensing {
+func NewOperators(conns infra.DbConnection, refData *RefData) OperatorClensing {
 	s := time.Now()
 
 	// INFO: 固定値設定
 	cs := OperatorClensing{
-		conns: conns,
-		Result: Result{
-			TableNameJp: "担当者",
-			TableNameEn: "operators",
-		},
-		keys: map[string]struct{}{},
+		conns:   conns,
+		refData: refData,
+		Result:  Result{TableNameJp: "担当者", TableNameEn: "operators"},
+		keys:    map[string]struct{}{},
 	}
 	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
@@ -79,6 +79,7 @@ func NewOperators(conns infra.DbConnection) OperatorClensing {
 		UpdatedBy:    OPERATION_USER,
 	}
 	rec.Insert(ctx, cs.conns.WorkDB, boil.Infer())
+	cs.refData.OperatorNameSet["N/A"] = struct{}{}
 
 	duration := time.Since(s).Seconds()
 	cs.Result.duration = duration
@@ -178,6 +179,9 @@ func (cs *OperatorClensing) saveData(record *legacy.Operator, piece *OperatorPie
 	if err != nil {
 		piece.setStatus(REMOVE, false)
 		piece.addMessage(fmt.Sprintf("%v", err), "")
+	} else {
+		// INFO: [担当者名]登録
+		cs.refData.OperatorNameSet[record.OperatorName] = struct{}{}
 	}
 	cs.setResult(piece)
 }

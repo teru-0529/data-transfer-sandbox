@@ -18,12 +18,6 @@ import (
 )
 
 // STRUCT:
-type OrdersClensing struct {
-	conns   infra.DbConnection
-	Result  Result
-	Details []*OrderPiece
-}
-
 type OrderPiece struct {
 	OrderNo  int
 	status   Status
@@ -42,15 +36,24 @@ func (p *OrderPiece) addMessage(msg string, id string) {
 	p.message = genMessage(p.message, msg, id)
 }
 
+// STRUCT:
+type OrdersClensing struct {
+	conns   infra.DbConnection
+	refData *RefData
+	Result  Result
+	Details []*OrderPiece
+}
+
 // FUNCTION:
-func NewOrders(conns infra.DbConnection) OrdersClensing {
+func NewOrders(conns infra.DbConnection, refData *RefData) OrdersClensing {
 	s := time.Now()
 
 	// INFO: 固定値設定
-	cs := OrdersClensing{conns: conns, Result: Result{
-		TableNameJp: "受注",
-		TableNameEn: "orders",
-	}}
+	cs := OrdersClensing{
+		conns:   conns,
+		refData: refData,
+		Result:  Result{TableNameJp: "受注", TableNameEn: "orders"},
+	}
 	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
 	// PROCESS: 入力データ量
@@ -132,9 +135,8 @@ func (cs *OrdersClensing) checkAndClensing(record *legacy.Order) *OrderPiece {
 	orderPic := record.OrderPic
 	var defOrderPic = "N/A"
 
-	// PK検索ではないので、legacy.OperatorExists()は使えない。
-	ok1, _ := legacy.Operators(legacy.OperatorWhere.OperatorName.EQ(orderPic)).Exists(ctx, cs.conns.LegacyDB)
-	if !ok1 {
+	_, exist := cs.refData.OperatorNameSet[orderPic]
+	if !exist {
 		record.OrderPic = defOrderPic
 
 		piece.setStatus(MODIFY, true)
