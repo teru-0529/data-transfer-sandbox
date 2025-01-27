@@ -204,39 +204,6 @@ func (r *Result) ShowRecord(num int) string {
 	)
 }
 
-// FUNCTION: FIXME:
-func approveStr(apploved bool) string {
-	if apploved {
-		return "✅"
-	} else {
-		return ""
-	}
-}
-
-// FUNCTION: FIXME:
-func judgeStatus(baseStatus, status Status) Status {
-	if status == REMOVE || baseStatus == REMOVE {
-		return REMOVE
-	} else if status == MODIFY || baseStatus == MODIFY {
-		return MODIFY
-	} else {
-		return NO_CHANGE
-	}
-}
-
-// FUNCTION: FIXME:
-func genMessage(msg, appendMsg string, id string) string {
-	br := ""
-	_id := ""
-	if len(msg) != 0 {
-		br = "<BR>"
-	}
-	if id != "" {
-		_id = fmt.Sprintf("[%s]", id)
-	}
-	return fmt.Sprintf("%s%s● %s %s", msg, br, _id, appendMsg)
-}
-
 // STRUCT: リファレンスデータ
 type RefData struct {
 	OperatorNameSet map[string]struct{} //担当者名

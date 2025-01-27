@@ -17,24 +17,10 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-// STRUCT: FIXME:
+// STRUCT:
 type ProductPiece struct {
 	ProductName string
 	bp          *Piece
-	status      Status
-	approved    bool
-	message     string
-}
-
-// FUNCTION: ステータスの変更 FIXME:
-func (p *ProductPiece) setStatus(status Status, approved bool) {
-	p.status = judgeStatus(p.status, status)
-	p.approved = p.approved && approved
-}
-
-// FUNCTION: メッセージの追加 FIXME:
-func (p *ProductPiece) addMessage(msg string, id string) {
-	p.message = genMessage(p.message, msg, id)
 }
 
 // STRUCT:
@@ -112,7 +98,6 @@ func (cs *ProductsClensing) iterate() {
 			// PROCESS: レコード毎のクレンジング後データ登録
 			cs.saveData(record, piece)
 
-			// FIXME:
 			// PROCESS: 処理結果の登録
 			cs.Result.setResult(piece.bp)
 			if piece.bp.isWarn() {
@@ -127,12 +112,10 @@ func (cs *ProductsClensing) iterate() {
 
 // FUNCTION: レコード毎のチェック
 func (cs *ProductsClensing) checkAndClensing(record *legacy.Product) *ProductPiece {
-	// INFO: piece FIXME:
+	// INFO: piece
 	piece := ProductPiece{
 		ProductName: record.ProductName,
 		bp:          NewPiece(),
-		status:      NO_CHANGE,
-		approved:    true,
 	}
 
 	// PROCESS: #2-01: cost_priceが負の数字の場合は、0にクレンジングする。
@@ -144,10 +127,6 @@ func (cs *ProductsClensing) checkAndClensing(record *legacy.Product) *ProductPie
 		piece.bp.approveStay() //TODO: 承認確認中
 		piece.bp.modified().addMessage(
 			fmt.Sprintf("cost_price(商品原価) が負の数。`%d` → `0`(固定値) にクレンジング。", costPrice), "#2-01")
-
-		// FIXME:
-		piece.setStatus(MODIFY, false)
-		piece.addMessage(fmt.Sprintf("cost_price(商品原価) が負の数。`%d` → `0`(固定値) にクレンジング。", costPrice), "#2-01")
 	}
 
 	return &piece
@@ -156,9 +135,7 @@ func (cs *ProductsClensing) checkAndClensing(record *legacy.Product) *ProductPie
 // FUNCTION: レコード毎のクレンジング後データ登録
 func (cs *ProductsClensing) saveData(record *legacy.Product, piece *ProductPiece) {
 	// PROCESS: REMOVEDの場合はDBに登録しない
-	// if piece.status == REMOVE { FIXME:
 	if piece.bp.isRemove() {
-		// cs.setResult(piece)
 		return
 	}
 
@@ -175,31 +152,9 @@ func (cs *ProductsClensing) saveData(record *legacy.Product, piece *ProductPiece
 	// PROCESS: 登録に失敗した場合は、削除(エラーログを格納、未承認扱い)
 	if err != nil {
 		piece.bp.dbError(err)
-		// FIXME:
-		// piece.bp.setStatus(REMOVE).setApprove(NOT_FINDED).addMessage(redFont(fmt.Sprintf("%v", err)), "")
-
-		// FIXME:
-		piece.setStatus(REMOVE, false)
-		piece.addMessage(fmt.Sprintf("%v", err), "")
 	} else {
 		// INFO: [商品名]登録
 		cs.refData.ProductNameSet[record.ProductName] = struct{}{}
-	}
-	// FIXME:
-	// cs.setResult(piece)
-}
-
-// FUNCTION: クレンジング結果の登録 FIXME:
-func (cs *ProductsClensing) setResult(piece *ProductPiece) {
-	switch piece.status {
-	case NO_CHANGE:
-		cs.Result.UnchangeCount++
-	case MODIFY:
-		cs.Result.ModifyCount++
-		cs.Details = append(cs.Details, piece)
-	case REMOVE:
-		cs.Result.RemoveCount++
-		cs.Details = append(cs.Details, piece)
 	}
 }
 
@@ -221,11 +176,6 @@ func (cs *ProductsClensing) ShowDetails() string {
 			piece.bp.status,
 			piece.bp.approve,
 			piece.bp.msg,
-
-			// FIXME:
-			// piece.status,
-			// approveStr(piece.approved),
-			// piece.message,
 		)
 	}
 
