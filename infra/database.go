@@ -19,7 +19,7 @@ import (
 type DbConnection struct {
 	LegacyDB  *sql.DB
 	WorkDB    *sql.DB
-	productDB *sql.DB
+	ProductDB *sql.DB
 }
 
 // FUNCTION: DB setting
@@ -29,12 +29,12 @@ func initDB(config *Config) (DbConnection, func()) {
 	cons := DbConnection{
 		LegacyDB:  createCon(genMysqlDns(config.LegacyDB)),
 		WorkDB:    createCon(genPsqlDns(config.WorkDB)),
-		productDB: createCon(genPsqlDns(config.ProductDB)),
+		ProductDB: createCon(genPsqlDns(config.ProductDB)),
 	}
 	return cons, func() {
 		cons.LegacyDB.Close()
 		cons.WorkDB.Close()
-		cons.productDB.Close()
+		cons.ProductDB.Close()
 	}
 }
 

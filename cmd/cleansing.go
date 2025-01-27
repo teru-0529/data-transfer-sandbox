@@ -27,13 +27,14 @@ var cleansingCmd = &cobra.Command{
 		// PROCESS: config, データベース(Sqlboiler)コネクションの取得
 		config, conns, cleanUp := infra.LeadConfig(version)
 		defer cleanUp()
+		dirPath := path.Join("work", config.DirName())
 
 		// PROCESS: クレンジング実行
 		clensingMsg := service.Cleansing(conns)
 
 		// PROCESS: データダンプ
 		container := infra.NewContainer("work-db", config.WorkDB)
-		dumpfilePath := path.Join("work", path.Join(config.DirName(), WORK_DB_DUMP))
+		dumpfilePath := path.Join(dirPath, DML_WORK_DB)
 		extArgs := []string{"--data-only", "--schema=clean"}
 		if err := container.DumpDb(dumpfilePath, extArgs); err != nil {
 			return err
@@ -50,7 +51,7 @@ var cleansingCmd = &cobra.Command{
 		msg += fmt.Sprintf("- **total elapsed time**: %s\n", elapse)
 		msg += clensingMsg
 
-		logPath := path.Join("work", path.Join(config.DirName(), "cleansing-log.md"))
+		logPath := path.Join(dirPath, "cleansing-log.md")
 		if err := infra.WriteLog(logPath, msg, &now); err != nil {
 			return err
 		}

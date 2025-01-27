@@ -16,7 +16,10 @@ var (
 )
 
 // STRUCT: ワークDBのダンプファイル名
-const WORK_DB_DUMP = "dml-work-db.sql.gz"
+const DML_WORK_DB = "dml-work.sql.gz"
+const DML_PROD_DB_LOCAL = "dml-local.sql.gz"
+const DDL_PROD_DB_AWS = "ddl-aws.sql.gz"
+const DML_PROD_DB_AWS = "dml-aws.sql.gz"
 
 var cfgFile string
 

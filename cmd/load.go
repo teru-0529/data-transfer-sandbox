@@ -28,9 +28,10 @@ var loadCmd = &cobra.Command{
 		// PROCESS: config, データベース(Sqlboiler)コネクションの取得
 		config, conns, cleanUp := infra.LeadConfig(version)
 		defer cleanUp()
+		dirPath := path.Join("work", config.DirName())
 
 		// PROCESS: ファイルが存在しない場合エラー
-		loadfilePath := path.Join("work", path.Join(config.DirName(), WORK_DB_DUMP))
+		loadfilePath := path.Join(dirPath, DML_WORK_DB)
 		if f, err := os.Stat(loadfilePath); os.IsNotExist(err) || f.IsDir() {
 			return fmt.Errorf("not exist loadfile[%s]: %s", loadfilePath, err.Error())
 		}

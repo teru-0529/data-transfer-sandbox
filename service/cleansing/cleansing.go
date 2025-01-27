@@ -159,7 +159,7 @@ func (r Result) sectionCount() int {
 	return (r.EntryCount - 1 + LIMIT) / LIMIT
 }
 
-// FUNCTION: trauncate文の生成
+// FUNCTION: ElapseTime
 func (r Result) Elapsed() float64 {
 	// 小数点3位で四捨五入
 	return math.Round(r.duration*100) / 100
@@ -198,7 +198,6 @@ func (r *Result) ShowRecord(num int) string {
 		p.Sprintf("%d", r.UnchangeCount),
 		p.Sprintf("%d", r.ModifyCount),
 		removeCountStr,
-		// p.Sprintf("%d", r.RemoveCount),
 		p.Sprintf("%d", r.AcceptCount()),
 		r.AcceptRate(),
 	)
