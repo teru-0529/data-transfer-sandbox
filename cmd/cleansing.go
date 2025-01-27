@@ -31,7 +31,7 @@ var cleansingCmd = &cobra.Command{
 		// PROCESS: クレンジング実行
 		clensingMsg := service.Cleansing(conns)
 
-		// PROCESS: cleanダンプ
+		// PROCESS: データダンプ
 		container := infra.NewContainer("work-db", config.WorkDB)
 		dumpfilePath := path.Join("work", path.Join(config.DirName(), WORK_DB_DUMP))
 		extArgs := []string{"--data-only", "--schema=clean"}

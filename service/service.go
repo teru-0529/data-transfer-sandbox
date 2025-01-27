@@ -13,8 +13,6 @@ import (
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/service/cleansing"
 	"github.com/teru-0529/data-transfer-sandbox/spec/source/clean"
-	"github.com/teru-0529/data-transfer-sandbox/spec/source/work"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 )
 
@@ -85,12 +83,6 @@ func cleansingResult(num int, result cleansing.Result) string {
 		p.Sprintf("%d", result.AcceptCount()),
 		result.AcceptRate(),
 	)
-}
-
-// FUNCTION: DumpfileNameの登録
-func RegisterDumpName(conns infra.DbConnection, filename string) {
-	record := work.CleanDB{DumpFileName: filename}
-	record.Upsert(ctx, conns.WorkDB, true, []string{"dump_key"}, boil.Infer(), boil.Infer())
 }
 
 // FUNCTION: cleanDBのテーブルを全てtruncate

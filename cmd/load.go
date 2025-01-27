@@ -35,7 +35,7 @@ var loadCmd = &cobra.Command{
 			return fmt.Errorf("not exist loadfile[%s]: %s", loadfilePath, err.Error())
 		}
 
-		// PROCESS: cleanDBトランケート
+		// PROCESS: データロード先(workDB)トランケート
 		service.TruncateCleanDbAll(conns)
 
 		// PROCESS: データロード
