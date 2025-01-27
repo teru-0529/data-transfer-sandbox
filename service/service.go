@@ -7,9 +7,6 @@ import (
 	"context"
 	"fmt"
 
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
-
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/service/cleansing"
 	"github.com/teru-0529/data-transfer-sandbox/spec/source/clean"
@@ -20,9 +17,6 @@ import (
 
 // STRUCT: ダミーコンテキスト
 var ctx context.Context = context.Background()
-
-// STRUCT: printer(数値をカンマ区切りで出力するために利用)
-var p = message.NewPrinter(language.Japanese)
 
 // FUNCTION: クレンジング
 func Cleansing(conns infra.DbConnection) string {
@@ -38,25 +32,25 @@ func Cleansing(conns infra.DbConnection) string {
 	// PROCESS: 1.operators
 	num++
 	cs1 := cleansing.NewOperators(conns, refData)
-	msg += cleansingResult(num, cs1.Result)
+	msg += cs1.Result.ShowRecord(num)
 	detailMsg += cs1.ShowDetails()
 
 	// PROCESS: 2.products
 	num++
 	cs2 := cleansing.NewProducts(conns, refData)
-	msg += cleansingResult(num, cs2.Result)
+	msg += cs2.Result.ShowRecord(num)
 	detailMsg += cs2.ShowDetails()
 
 	// PROCESS: 3.orders
 	num++
 	cs3 := cleansing.NewOrders(conns, refData)
-	msg += cleansingResult(num, cs3.Result)
+	msg += cs3.Result.ShowRecord(num)
 	detailMsg += cs3.ShowDetails()
 
-	// PROCESS: 3.orders
+	// PROCESS: 4.order_details
 	num++
 	cs4 := cleansing.NewOrderDetails(conns, refData)
-	msg += cleansingResult(num, cs4.Result)
+	msg += cs4.Result.ShowRecord(num)
 	detailMsg += cs4.ShowDetails()
 
 	// PROCESS: 詳細メッセージ
@@ -67,22 +61,6 @@ func Cleansing(conns infra.DbConnection) string {
 	}
 	msg += "\n-----\n"
 	return msg
-}
-
-// FUNCTION: clensingResult件数
-func cleansingResult(num int, result cleansing.Result) string {
-
-	return fmt.Sprintf("  | %d. | %s | %s | %s | … | %s | %s | %s | … | %s | %3.1f%% |\n",
-		num,
-		result.TableName(),
-		p.Sprintf("%d", result.EntryCount),
-		p.Sprintf("%3.2fs", result.Elapsed()),
-		p.Sprintf("%d", result.UnchangeCount),
-		p.Sprintf("%d", result.ModifyCount),
-		p.Sprintf("%d", result.RemoveCount),
-		p.Sprintf("%d", result.AcceptCount()),
-		result.AcceptRate(),
-	)
 }
 
 // FUNCTION: cleanDBのテーブルを全てtruncate

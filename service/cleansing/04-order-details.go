@@ -17,22 +17,23 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-// STRUCT:
+// STRUCT: FIXME:
 type OrderDetailPiece struct {
 	OrderNo       int
 	OrderDetailNo int
+	bp            *Piece
 	status        Status
 	approved      bool
 	message       string
 }
 
-// FUNCTION: ステータスの変更
+// FUNCTION: ステータスの変更 FIXME:
 func (p *OrderDetailPiece) setStatus(status Status, approved bool) {
 	p.status = judgeStatus(p.status, status)
 	p.approved = p.approved && approved
 }
 
-// FUNCTION: メッセージの追加
+// FUNCTION: メッセージの追加 FIXME:
 func (p *OrderDetailPiece) addMessage(msg string, id string) {
 	p.message = genMessage(p.message, msg, id)
 }
@@ -106,6 +107,13 @@ func (cs *OrderDetailsClensing) iterate() {
 			// PROCESS: レコード毎のクレンジング後データ登録
 			cs.saveData(record, piece)
 
+			// FIXME:
+			// PROCESS: 処理結果の登録
+			cs.Result.setResult(piece.bp)
+			if piece.bp.isWarn() {
+				cs.Details = append(cs.Details, piece)
+			}
+
 			bar.Increment()
 		}
 	}
@@ -114,16 +122,21 @@ func (cs *OrderDetailsClensing) iterate() {
 
 // FUNCTION: レコード毎のチェック
 func (cs *OrderDetailsClensing) checkAndClensing(record *legacy.OrderDetail) *OrderDetailPiece {
-	// INFO: piece
+	// INFO: piece FIXME:
 	piece := OrderDetailPiece{
 		OrderNo:       record.OrderNo,
 		OrderDetailNo: record.OrderDetailNo,
+		bp:            NewPiece(),
 		status:        NO_CHANGE,
 		approved:      true,
 	}
 
 	// PROCESS: #4-01: shipping_flag/ cancel_flagの両方がtrueの場合、移行対象から除外する。
 	if record.ShippingFlag && record.CanceledFlag {
+		piece.bp.removed().addMessage(
+			"shipping_flag(出荷済フラグ)、canceled_flag(キャンセルフラグ)がいずれも `true`。移行対象から除外。", "#4-01")
+
+		// FIXME:
 		piece.setStatus(REMOVE, true)
 		piece.addMessage("shipping_flag(出荷済フラグ)、canceled_flag(キャンセルフラグ)がいずれも `true`。移行対象から除外。", "#4-01")
 	}
@@ -131,6 +144,11 @@ func (cs *OrderDetailsClensing) checkAndClensing(record *legacy.OrderDetail) *Or
 	// PROCESS: #4-02: order_noが[受注]に存在しない場合、移行対象から除外する。
 	_, exist1 := cs.refData.OrderNoSet[record.OrderNo]
 	if !exist1 {
+		piece.bp.approveStay() //TODO: 承認確認中
+		piece.bp.removed().addMessage(
+			fmt.Sprintf("order_no(受注番号) が[受注]に存在しない。移行対象から除外 `%d`。", record.OrderNo), "#4-02")
+
+		// FIXME:
 		piece.setStatus(REMOVE, false)
 		piece.addMessage(fmt.Sprintf("order_no(受注番号) が[受注]に存在しない。移行対象から除外 `%d`。", record.OrderNo), "#4-02")
 	}
@@ -139,6 +157,10 @@ func (cs *OrderDetailsClensing) checkAndClensing(record *legacy.OrderDetail) *Or
 	// TODO: クレンジング処理未記載の状況際限のためコメントアウト
 	// _, exist2 := cs.refData.ProductNameSet[record.ProductName]
 	// if !exist2 {
+	// 	piece.bp.removed().addMessage(
+	// 		fmt.Sprintf("product_name(商品名) が[商品]に存在しない。移行対象から除外 `%s`。", record.ProductName), "#4-03")
+
+	// 	// FIXME:
 	// 	piece.setStatus(REMOVE, true)
 	// 	piece.addMessage(fmt.Sprintf("product_name(商品名) が[商品]に存在しない。移行対象から除外 `%s`。", record.ProductName), "#4-03")
 	// }
@@ -149,8 +171,9 @@ func (cs *OrderDetailsClensing) checkAndClensing(record *legacy.OrderDetail) *Or
 // FUNCTION: レコード毎のクレンジング後データ登録
 func (cs *OrderDetailsClensing) saveData(record *legacy.OrderDetail, piece *OrderDetailPiece) {
 	// PROCESS: REMOVEDの場合はDBに登録しない
-	if piece.status == REMOVE {
-		cs.setResult(piece)
+	// if piece.status == REMOVE { FIXME:
+	if piece.bp.isRemove() {
+		// cs.setResult(piece)
 		return
 	}
 
@@ -176,13 +199,19 @@ func (cs *OrderDetailsClensing) saveData(record *legacy.OrderDetail, piece *Orde
 
 	// PROCESS: 登録に失敗した場合は、削除(エラーログを格納、未承認扱い)
 	if err != nil {
+		piece.bp.dbError(err)
+		// FIXME:
+		// piece.bp.setStatus(REMOVE).setApprove(NOT_FINDED).addMessage(redFont(fmt.Sprintf("%v", err)), "")
+
+		// FIXME:
 		piece.setStatus(REMOVE, false)
 		piece.addMessage(fmt.Sprintf("%v", err), "")
 	}
-	cs.setResult(piece)
+	// FIXME:
+	// cs.setResult(piece)
 }
 
-// FUNCTION: クレンジング結果の登録
+// FUNCTION: クレンジング結果の登録 FIXME:
 func (cs *OrderDetailsClensing) setResult(piece *OrderDetailPiece) {
 	switch piece.status {
 	case NO_CHANGE:
@@ -212,9 +241,14 @@ func (cs *OrderDetailsClensing) ShowDetails() string {
 			i+1,
 			piece.OrderNo,
 			piece.OrderDetailNo,
-			piece.status,
-			approveStr(piece.approved),
-			piece.message,
+			piece.bp.status,
+			piece.bp.approve,
+			piece.bp.msg,
+
+			// FIXME:
+			// piece.status,
+			// approveStr(piece.approved),
+			// piece.message,
 		)
 	}
 
