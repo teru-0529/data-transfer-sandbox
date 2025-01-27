@@ -29,9 +29,6 @@ var transferCmd = &cobra.Command{
 		defer cleanUp()
 		dirPath := path.Join("dist", config.DirName())
 
-		// FIXME:
-		_ = conns
-
 		// PROCESS: データ移行実行
 		transferMsg := service.Transfer(conns)
 

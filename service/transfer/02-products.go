@@ -18,26 +18,26 @@ import (
 )
 
 // STRUCT:
-type OperatorPiece struct {
-	OperatorId string
-	bp         *Piece
+type ProductPiece struct {
+	ProductId string
+	bp        *Piece
 }
 
 // STRUCT:
-type OperatorTransfer struct {
+type ProductTransfer struct {
 	conns   infra.DbConnection
 	Result  Result
-	Details []*OperatorPiece
+	Details []*ProductPiece
 }
 
 // FUNCTION:
-func NewOperators(conns infra.DbConnection) OperatorTransfer {
+func NewProducts(conns infra.DbConnection) ProductTransfer {
 	s := time.Now()
 
 	// INFO: 固定値設定
-	ts := OperatorTransfer{
+	ts := ProductTransfer{
 		conns:  conns,
-		Result: Result{Schema: "orders", TableNameJp: "担当者", TableNameEn: "operators"},
+		Result: Result{Schema: "orders", TableNameJp: "商品", TableNameEn: "products"},
 	}
 	log.Printf("[%s] table transfer ...", ts.Result.TableNameEn)
 
@@ -60,9 +60,9 @@ func NewOperators(conns infra.DbConnection) OperatorTransfer {
 }
 
 // FUNCTION: 入力データ量
-func (ts *OperatorTransfer) setEntryCount() {
+func (ts *ProductTransfer) setEntryCount() {
 	// INFO: Workテーブル名
-	num, err := clean.Operators().Count(ctx, ts.conns.WorkDB)
+	num, err := clean.Products().Count(ctx, ts.conns.WorkDB)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -70,14 +70,14 @@ func (ts *OperatorTransfer) setEntryCount() {
 }
 
 // FUNCTION: データ繰り返し取得(1000件単位で分割)
-func (ts *OperatorTransfer) iterate() {
+func (ts *ProductTransfer) iterate() {
 	bar := pb.Default.Start(ts.Result.EntryCount)
 	bar.SetMaxWidth(80)
 
 	// PROCESS: 1000件単位でのSQL実行に分割する
 	for section := 0; section < ts.Result.sectionCount(); section++ {
 		// INFO: Workテーブル名
-		records, err := clean.Operators(qm.Limit(LIMIT), qm.Offset(section*LIMIT)).All(ctx, ts.conns.WorkDB)
+		records, err := clean.Products(qm.Limit(LIMIT), qm.Offset(section*LIMIT)).All(ctx, ts.conns.WorkDB)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -93,24 +93,27 @@ func (ts *OperatorTransfer) iterate() {
 }
 
 // FUNCTION: レコード毎のデータ登録
-func (ts *OperatorTransfer) saveData(record *clean.Operator) {
+func (ts *ProductTransfer) saveData(record *clean.Product) {
 
 	// PROCESS: データ登録
 	// INFO: productテーブル
-	rec := orders.Operator{
-		OperatorID:   record.OperatorID,
-		OperatorName: record.OperatorName,
-		CreatedBy:    OPERATION_USER,
-		UpdatedBy:    OPERATION_USER,
+	rec := orders.Product{
+		ProductID:     record.WProductID,
+		ProductName:   record.ProductName,
+		CostPrice:     record.CostPrice,
+		ProductPic:    "Z9999",
+		ProductStatus: orders.ProductStatusON_SALE,
+		CreatedBy:     OPERATION_USER,
+		UpdatedBy:     OPERATION_USER,
 	}
 	err := rec.Insert(ctx, ts.conns.ProductDB, boil.Infer())
 
 	// PROCESS: 登録に失敗した場合は、削除(エラーログを格納)
 	if err != nil {
 		// INFO: piece
-		piece := OperatorPiece{
-			OperatorId: record.OperatorID,
-			bp:         removedPiece(fmt.Sprintf("%v", err)),
+		piece := ProductPiece{
+			ProductId: record.WProductID,
+			bp:        removedPiece(fmt.Sprintf("%v", err)),
 		}
 		ts.Result.setResult(piece.bp)
 		ts.Details = append(ts.Details, &piece)
@@ -118,7 +121,7 @@ func (ts *OperatorTransfer) saveData(record *clean.Operator) {
 }
 
 // FUNCTION: 詳細情報の出力
-func (ts *OperatorTransfer) ShowDetails() string {
+func (ts *ProductTransfer) ShowDetails() string {
 	if len(ts.Details) == 0 {
 		return ""
 	}
@@ -126,12 +129,12 @@ func (ts *OperatorTransfer) ShowDetails() string {
 	var msg string
 	msg += fmt.Sprintf("\n### %s\n\n", ts.Result.TableName())
 
-	msg += "  | # | operator_id | … | RESULT | CHANGE | MESSAGE |\n"
+	msg += "  | # | product_id | … | RESULT | CHANGE | MESSAGE |\n"
 	msg += "  |--:|---|---|:-:|:-:|---|\n"
 	for i, piece := range ts.Details {
 		msg += fmt.Sprintf("  | %d | %s | … | %s | %+d | %s |\n",
 			i+1,
-			piece.OperatorId,
+			piece.ProductId,
 			piece.bp.status,
 			piece.bp.count,
 			piece.bp.msg,

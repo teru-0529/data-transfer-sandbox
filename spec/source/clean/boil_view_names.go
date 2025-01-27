@@ -4,4 +4,9 @@
 package clean
 
 var ViewNames = struct {
-}{}
+	WOrderDetails string
+	WOrders       string
+}{
+	WOrderDetails: "w_order_details",
+	WOrders:       "w_orders",
+}

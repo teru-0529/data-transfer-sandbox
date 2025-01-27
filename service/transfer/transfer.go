@@ -107,15 +107,13 @@ func (r *Result) setResult(bp *Piece) {
 
 // FUNCTION: clensingResult件数
 func (r *Result) ShowRecord(num int) string {
-	// msg += "  | # | TABLE | ENTRY | ELAPSED | … | CHANGE | … | ACCEPT | RATE |\n"
-	// msg += "  |--:|---|--:|--:|---|--:|---|--:|--:|\n"
-
-	return fmt.Sprintf("  | %d. | %s | %s | %s | … | %s | … | %s |\n",
+	return fmt.Sprintf("  | %d. | %s | %s | %s | %s | … | %s | … | %s |\n",
 		num,
+		r.Schema,
 		r.TableName(),
 		p.Sprintf("%d", r.EntryCount),
 		p.Sprintf("%3.2fs", r.Elapsed()),
-		p.Sprintf("%d", r.ChangeCount),
+		p.Sprintf("%+d", r.ChangeCount),
 		p.Sprintf("%d", r.AcceptCount()),
 	)
 }
