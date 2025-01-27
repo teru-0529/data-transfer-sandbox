@@ -9,6 +9,7 @@ import (
 
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/service/cleansing"
+	"github.com/teru-0529/data-transfer-sandbox/service/transfer"
 	"github.com/teru-0529/data-transfer-sandbox/spec/source/clean"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 )
@@ -75,4 +76,48 @@ func TruncateCleanDbAll(conns infra.DbConnection) {
 	for _, name := range tables {
 		queries.Raw(fmt.Sprintf("truncate clean.%s CASCADE;", name)).ExecContext(ctx, conns.WorkDB)
 	}
+}
+
+// FUNCTION: 移行
+func Transfer(conns infra.DbConnection) string {
+
+	var detailMsg string
+	var num int
+
+	msg := "\n## Data Transfer to Production DB\n\n"
+	msg += "  | # | TABLE | ENTRY | ELAPSED | … | CHANGE | … | ACCEPT |\n"
+	msg += "  |--:|---|--:|--:|---|--:|---|--:|\n"
+
+	// PROCESS: 1.operators
+	num++
+	cs1 := transfer.NewOperators(conns)
+	msg += cs1.Result.ShowRecord(num)
+	detailMsg += cs1.ShowDetails()
+
+	// // PROCESS: 2.products
+	// num++
+	// cs2 := cleansing.NewProducts(conns, refData)
+	// msg += cs2.Result.ShowRecord(num)
+	// detailMsg += cs2.ShowDetails()
+
+	// // PROCESS: 3.orders
+	// num++
+	// cs3 := cleansing.NewOrders(conns, refData)
+	// msg += cs3.Result.ShowRecord(num)
+	// detailMsg += cs3.ShowDetails()
+
+	// // PROCESS: 4.order_details
+	// num++
+	// cs4 := cleansing.NewOrderDetails(conns, refData)
+	// msg += cs4.Result.ShowRecord(num)
+	// detailMsg += cs4.ShowDetails()
+
+	// PROCESS: 詳細メッセージ
+	if len(detailMsg) > 0 {
+		msg += "\n<details><summary>(open) modify and remove detail info</summary>\n"
+		msg += detailMsg
+		msg += "\n</details>\n"
+	}
+	msg += "\n-----\n"
+	return msg
 }

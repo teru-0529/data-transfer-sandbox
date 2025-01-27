@@ -7,6 +7,7 @@ package infra
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -63,5 +64,26 @@ func WriteText(filePath string, msg string) error {
 
 	// PROCESS: 書き込み
 	file.WriteString(msg)
+	return nil
+}
+
+// FUNCTION: ファイルのコピー
+func FileCopy(srcPath string, distPath string) error {
+	src, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	dst, err := os.Create(distPath)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+	if err != nil {
+		return err
+	}
 	return nil
 }
