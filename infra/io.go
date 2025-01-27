@@ -17,6 +17,12 @@ import (
 // FUNCTION: ファイルへの書き込み（sfxを指定した場合は、ファイル名の最後にsfxを付けた履歴も保存する）
 func WriteLog(filePath string, msg string, timestamp *time.Time) error {
 
+	// PROCESS: 最新ログを削除
+	err := os.Remove(filePath)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	// PROCESS: ログの書き込み
 	if err := WriteText(filePath, msg); err != nil {
 		return err
