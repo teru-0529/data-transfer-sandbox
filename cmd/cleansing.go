@@ -21,7 +21,7 @@ var cleansingCmd = &cobra.Command{
 	Long:  "data check and clensing service from legacy database.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		// STRUCT: 現在時刻(Elapse計測用)
+		// PROCESS: 現在時刻(Elapse計測用)
 		now := time.Now()
 
 		// PROCESS: config, データベース(Sqlboiler)コネクションの取得
@@ -32,14 +32,12 @@ var cleansingCmd = &cobra.Command{
 		clensingMsg := service.Cleansing(conns)
 
 		// PROCESS: cleanダンプ
-		dumpfile := fmt.Sprintf("%s-clean-dump-%s.sql.gz", config.Base.LegacyDataKey, now.Format("060102-150405"))
-		dumpfilePath := path.Join("dist/cleansing", dumpfile)
-		extArgs := []string{"--data-only", "--schema=clean"}
 		container := infra.NewContainer("work-db", config.WorkDB)
+		dumpfilePath := path.Join("work", path.Join(config.DirName(), WORK_DB_DUMP))
+		extArgs := []string{"--data-only", "--schema=clean"}
 		if err := container.DumpDb(dumpfilePath, extArgs); err != nil {
 			return err
 		}
-		service.RegisterDumpName(conns, dumpfile)
 
 		// PROCESS: 処理時間計測
 		elapse := infra.ElapsedStr(now)

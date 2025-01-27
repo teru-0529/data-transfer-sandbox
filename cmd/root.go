@@ -9,10 +9,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// STRUCT: リリース情報
 var (
 	version     string
 	releaseDate string
 )
+
+// STRUCT: ワークDBのダンプファイル名
+const WORK_DB_DUMP = "dml-work-db.sql.gz"
+
 var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands

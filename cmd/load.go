@@ -15,8 +15,6 @@ import (
 	"github.com/teru-0529/data-transfer-sandbox/service"
 )
 
-var loadkey string
-
 // loadCmd represents the load command
 var loadCmd = &cobra.Command{
 	Use:   "load",
@@ -24,19 +22,18 @@ var loadCmd = &cobra.Command{
 	Long:  "clean database data load.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		// STRUCT: 現在時刻(Elapse計測用)
+		// PROCESS: 現在時刻(Elapse計測用)
 		now := time.Now()
-
-		// PROCESS: ファイルが存在しない場合エラー
-		loadfile := fmt.Sprintf("%s.sql.gz", loadkey)
-		loadfilePath := path.Join("dist/cleansing", loadfile)
-		if f, err := os.Stat(loadfilePath); os.IsNotExist(err) || f.IsDir() {
-			return fmt.Errorf("not exist dumpfile[%s]: %s", loadfile, err.Error())
-		}
 
 		// PROCESS: config, データベース(Sqlboiler)コネクションの取得
 		config, conns, cleanUp := infra.LeadConfig(version)
 		defer cleanUp()
+
+		// PROCESS: ファイルが存在しない場合エラー
+		loadfilePath := path.Join("work", path.Join(config.DirName(), WORK_DB_DUMP))
+		if f, err := os.Stat(loadfilePath); os.IsNotExist(err) || f.IsDir() {
+			return fmt.Errorf("not exist loadfile[%s]: %s", loadfilePath, err.Error())
+		}
 
 		// PROCESS: cleanDBトランケート
 		service.TruncateCleanDbAll(conns)
@@ -46,18 +43,13 @@ var loadCmd = &cobra.Command{
 		if err := container.LoadDb(loadfilePath); err != nil {
 			return err
 		}
-		service.RegisterDumpName(conns, loadfile)
 
 		// PROCESS: 処理時間計測
-		elapse := infra.ElapsedStr(now)
-		log.Printf("total elapsed time … %s\n", elapse)
+		log.Printf("total elapsed time … %s\n", infra.ElapsedStr(now))
 		return nil
 	},
 }
 
 // FUNCTION:
 func init() {
-	// PROCESS:フラグ値を変数にBind
-	loadCmd.Flags().StringVarP(&loadkey, "loaddata", "L", "", "load data key.")
-	loadCmd.MarkFlagRequired("loaddata")
 }
