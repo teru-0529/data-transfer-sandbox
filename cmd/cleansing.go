@@ -25,14 +25,14 @@ var cleansingCmd = &cobra.Command{
 		now := time.Now()
 
 		// PROCESS: config, データベース(Sqlboiler)コネクションの取得
-		config, conns, cleanUp := infra.LeadConfig()
+		config, conns, cleanUp := infra.LeadConfig(version)
 		defer cleanUp()
 
 		// PROCESS: クレンジング実行
 		clensingMsg := service.Cleansing(conns)
 
 		// PROCESS: cleanダンプ
-		dumpfile := fmt.Sprintf("%s-clean-dump-%s.sql.gz", config.Base.LegacyFile, now.Format("060102-150405"))
+		dumpfile := fmt.Sprintf("%s-clean-dump-%s.sql.gz", config.Base.LegacyDataKey, now.Format("060102-150405"))
 		dumpfilePath := path.Join("dist/cleansing", dumpfile)
 		extArgs := []string{"--data-only", "--schema=clean"}
 		container := infra.NewContainer("work-db", config.WorkDB)
@@ -42,18 +42,18 @@ var cleansingCmd = &cobra.Command{
 		service.RegisterDumpName(conns, dumpfile)
 
 		// PROCESS: 処理時間計測
-		elapse := tZero.Add(time.Duration(time.Since(now))).Format("15:04:05.000")
+		elapse := infra.ElapsedStr(now)
 
 		// PROCESS: Log File出力
 		msg := "# Data Cleansing Result\n\n"
 		msg += fmt.Sprintf("- **operation datetime**: %s\n", now.Format("2006/01/02 15:04:05"))
-		msg += fmt.Sprintf("- **transfer tool version**: %s\n", version)
-		msg += fmt.Sprintf("- **load legacy file**: %s\n", fmt.Sprintf("%s.sql", config.Base.LegacyFile))
+		msg += fmt.Sprintf("- **transfer tool version**: %s\n", config.Base.ToolVersion)
+		msg += fmt.Sprintf("- **load legacy DB key**: %s\n", config.Base.LegacyDataKey)
 		msg += fmt.Sprintf("- **total elapsed time**: %s\n", elapse)
 		msg += clensingMsg
 
-		logPath := path.Join("log/cleansing", fmt.Sprintf("cleansing-log-%s.md", now.Format("060102-150405")))
-		if err := infra.WriteText(logPath, msg); err != nil {
+		logPath := path.Join("work", path.Join(config.DirName(), "cleansing-log.md"))
+		if err := infra.WriteLog(logPath, msg, &now); err != nil {
 			return err
 		}
 

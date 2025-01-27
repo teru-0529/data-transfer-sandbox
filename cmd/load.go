@@ -35,7 +35,7 @@ var loadCmd = &cobra.Command{
 		}
 
 		// PROCESS: config, データベース(Sqlboiler)コネクションの取得
-		config, conns, cleanUp := infra.LeadConfig()
+		config, conns, cleanUp := infra.LeadConfig(version)
 		defer cleanUp()
 
 		// PROCESS: cleanDBトランケート
@@ -49,7 +49,7 @@ var loadCmd = &cobra.Command{
 		service.RegisterDumpName(conns, loadfile)
 
 		// PROCESS: 処理時間計測
-		elapse := tZero.Add(time.Duration(time.Since(now))).Format("15:04:05.000")
+		elapse := infra.ElapsedStr(now)
 		log.Printf("total elapsed time … %s\n", elapse)
 		return nil
 	},
