@@ -24,8 +24,11 @@ import (
 
 // WOrder is an object representing the database table.
 type WOrder struct {
+	Register             null.Bool   `boil:"register" json:"register,omitempty" toml:"register" yaml:"register,omitempty"`
+	Logging              null.Bool   `boil:"logging" json:"logging,omitempty" toml:"logging" yaml:"logging,omitempty"`
 	WOrderNo             null.String `boil:"w_order_no" json:"w_order_no,omitempty" toml:"w_order_no" yaml:"w_order_no,omitempty"`
 	OrderNo              null.Int    `boil:"order_no" json:"order_no,omitempty" toml:"order_no" yaml:"order_no,omitempty"`
+	ChangeCount          null.Int64  `boil:"change_count" json:"change_count,omitempty" toml:"change_count" yaml:"change_count,omitempty"`
 	OrderDate            null.Time   `boil:"order_date" json:"order_date,omitempty" toml:"order_date" yaml:"order_date,omitempty"`
 	OperatorID           null.String `boil:"operator_id" json:"operator_id,omitempty" toml:"operator_id" yaml:"operator_id,omitempty"`
 	OrderPic             null.String `boil:"order_pic" json:"order_pic,omitempty" toml:"order_pic" yaml:"order_pic,omitempty"`
@@ -37,8 +40,11 @@ type WOrder struct {
 }
 
 var WOrderColumns = struct {
+	Register             string
+	Logging              string
 	WOrderNo             string
 	OrderNo              string
+	ChangeCount          string
 	OrderDate            string
 	OperatorID           string
 	OrderPic             string
@@ -48,8 +54,11 @@ var WOrderColumns = struct {
 	IsShipped            string
 	IsRemaining          string
 }{
+	Register:             "register",
+	Logging:              "logging",
 	WOrderNo:             "w_order_no",
 	OrderNo:              "order_no",
+	ChangeCount:          "change_count",
 	OrderDate:            "order_date",
 	OperatorID:           "operator_id",
 	OrderPic:             "order_pic",
@@ -61,8 +70,11 @@ var WOrderColumns = struct {
 }
 
 var WOrderTableColumns = struct {
+	Register             string
+	Logging              string
 	WOrderNo             string
 	OrderNo              string
+	ChangeCount          string
 	OrderDate            string
 	OperatorID           string
 	OrderPic             string
@@ -72,8 +84,11 @@ var WOrderTableColumns = struct {
 	IsShipped            string
 	IsRemaining          string
 }{
+	Register:             "w_orders.register",
+	Logging:              "w_orders.logging",
 	WOrderNo:             "w_orders.w_order_no",
 	OrderNo:              "w_orders.order_no",
+	ChangeCount:          "w_orders.change_count",
 	OrderDate:            "w_orders.order_date",
 	OperatorID:           "w_orders.operator_id",
 	OrderPic:             "w_orders.order_pic",
@@ -111,8 +126,11 @@ func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsN
 func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var WOrderWhere = struct {
+	Register             whereHelpernull_Bool
+	Logging              whereHelpernull_Bool
 	WOrderNo             whereHelpernull_String
 	OrderNo              whereHelpernull_Int
+	ChangeCount          whereHelpernull_Int64
 	OrderDate            whereHelpernull_Time
 	OperatorID           whereHelpernull_String
 	OrderPic             whereHelpernull_String
@@ -122,8 +140,11 @@ var WOrderWhere = struct {
 	IsShipped            whereHelpernull_Bool
 	IsRemaining          whereHelpernull_Bool
 }{
+	Register:             whereHelpernull_Bool{field: "\"clean\".\"w_orders\".\"register\""},
+	Logging:              whereHelpernull_Bool{field: "\"clean\".\"w_orders\".\"logging\""},
 	WOrderNo:             whereHelpernull_String{field: "\"clean\".\"w_orders\".\"w_order_no\""},
 	OrderNo:              whereHelpernull_Int{field: "\"clean\".\"w_orders\".\"order_no\""},
+	ChangeCount:          whereHelpernull_Int64{field: "\"clean\".\"w_orders\".\"change_count\""},
 	OrderDate:            whereHelpernull_Time{field: "\"clean\".\"w_orders\".\"order_date\""},
 	OperatorID:           whereHelpernull_String{field: "\"clean\".\"w_orders\".\"operator_id\""},
 	OrderPic:             whereHelpernull_String{field: "\"clean\".\"w_orders\".\"order_pic\""},
@@ -135,9 +156,9 @@ var WOrderWhere = struct {
 }
 
 var (
-	wOrderAllColumns            = []string{"w_order_no", "order_no", "order_date", "operator_id", "order_pic", "customer_name", "w_total_order_price", "w_remaining_order_price", "is_shipped", "is_remaining"}
+	wOrderAllColumns            = []string{"register", "logging", "w_order_no", "order_no", "change_count", "order_date", "operator_id", "order_pic", "customer_name", "w_total_order_price", "w_remaining_order_price", "is_shipped", "is_remaining"}
 	wOrderColumnsWithoutDefault = []string{}
-	wOrderColumnsWithDefault    = []string{"w_order_no", "order_no", "order_date", "operator_id", "order_pic", "customer_name", "w_total_order_price", "w_remaining_order_price", "is_shipped", "is_remaining"}
+	wOrderColumnsWithDefault    = []string{"register", "logging", "w_order_no", "order_no", "change_count", "order_date", "operator_id", "order_pic", "customer_name", "w_total_order_price", "w_remaining_order_price", "is_shipped", "is_remaining"}
 	wOrderPrimaryKeyColumns     = []string{}
 	wOrderGeneratedColumns      = []string{}
 )

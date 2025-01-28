@@ -53,6 +53,9 @@ func NewOperators(conns infra.DbConnection) OperatorTransfer {
 	// PROCESS: 1行ごと処理
 	ts.iterate()
 
+	// PROCESS: 結果データ量
+	ts.setResultCount()
+
 	duration := time.Since(s).Seconds()
 	ts.Result.duration = duration
 	log.Printf("cleansing completed … %3.2fs\n", duration)
@@ -67,6 +70,16 @@ func (ts *OperatorTransfer) setEntryCount() {
 		log.Fatalln(err)
 	}
 	ts.Result.EntryCount = int(num)
+}
+
+// FUNCTION: 結果データ量
+func (ts *OperatorTransfer) setResultCount() {
+	// INFO: Productionテーブル名
+	num, err := orders.Operators().Count(ctx, ts.conns.ProductDB)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	ts.Result.ResultCount = int(num)
 }
 
 // FUNCTION: データ繰り返し取得(1000件単位で分割)
@@ -96,7 +109,7 @@ func (ts *OperatorTransfer) iterate() {
 func (ts *OperatorTransfer) saveData(record *clean.Operator) {
 
 	// PROCESS: データ登録
-	// INFO: productテーブル
+	// INFO: productionテーブル
 	rec := orders.Operator{
 		OperatorID:   record.OperatorID,
 		OperatorName: record.OperatorName,

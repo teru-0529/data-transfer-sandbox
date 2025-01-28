@@ -5,10 +5,12 @@
 CREATE OR REPLACE VIEW clean.w_order_details AS
 
   -- 集約
-  WITH od AS (
+  WITH oda AS (
     SELECT
       w_order_no,
       order_no,
+      STRING_AGG(order_detail_no::TEXT, ',') AS aggregated_details, --カンマ区切りでw_order_noを結合
+      COUNT(*) AS detail_count, -- 集約件数を計算
       product_name,
       SUM(receiving_quantity) AS receiving_quantity,
       SUM(w_shipping_quantity) AS w_shipping_quantity,
@@ -25,22 +27,29 @@ CREATE OR REPLACE VIEW clean.w_order_details AS
   )
 
   SELECT
-    od.w_order_no,
-    od.order_no,
+    ROW_NUMBER() OVER (PARTITION BY od.w_order_no, od.product_name ORDER BY od.order_detail_no DESC) = 1 AS register,
+    oda.w_order_no,
+    oda.order_no,
+    oda.aggregated_details,
+    oda.detail_count,
     pr.w_product_id,
-    od.product_name,
-    od.receiving_quantity,
-    od.w_shipping_quantity,
-    od.w_cancel_quantity,
-    od.w_remaining_quantity,
-    od.selling_price,
-    od.cost_price,
-    od.is_shipped,
-    od.is_remaining
+    oda.product_name,
+    oda.receiving_quantity,
+    oda.w_shipping_quantity,
+    oda.w_cancel_quantity,
+    oda.w_remaining_quantity,
+    oda.selling_price,
+    oda.cost_price,
+    oda.is_shipped,
+    oda.is_remaining
   FROM
-    od
+    clean.order_details od
+  LEFT OUTER JOIN
+    oda
+  ON
+    od.w_order_no = oda.w_order_no AND od.product_name = oda.product_name
   INNER JOIN
     clean.products pr
   ON
-    od.product_name = pr.product_name
-  ORDER BY od.w_order_no, pr.w_product_id;
+    oda.product_name = pr.product_name
+  ORDER BY oda.w_order_no, pr.w_product_id;

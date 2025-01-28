@@ -24,8 +24,11 @@ import (
 
 // WOrderDetail is an object representing the database table.
 type WOrderDetail struct {
+	Register           null.Bool   `boil:"register" json:"register,omitempty" toml:"register" yaml:"register,omitempty"`
 	WOrderNo           null.String `boil:"w_order_no" json:"w_order_no,omitempty" toml:"w_order_no" yaml:"w_order_no,omitempty"`
 	OrderNo            null.Int    `boil:"order_no" json:"order_no,omitempty" toml:"order_no" yaml:"order_no,omitempty"`
+	AggregatedDetails  null.String `boil:"aggregated_details" json:"aggregated_details,omitempty" toml:"aggregated_details" yaml:"aggregated_details,omitempty"`
+	DetailCount        null.Int64  `boil:"detail_count" json:"detail_count,omitempty" toml:"detail_count" yaml:"detail_count,omitempty"`
 	WProductID         null.String `boil:"w_product_id" json:"w_product_id,omitempty" toml:"w_product_id" yaml:"w_product_id,omitempty"`
 	ProductName        null.String `boil:"product_name" json:"product_name,omitempty" toml:"product_name" yaml:"product_name,omitempty"`
 	ReceivingQuantity  null.Int64  `boil:"receiving_quantity" json:"receiving_quantity,omitempty" toml:"receiving_quantity" yaml:"receiving_quantity,omitempty"`
@@ -39,8 +42,11 @@ type WOrderDetail struct {
 }
 
 var WOrderDetailColumns = struct {
+	Register           string
 	WOrderNo           string
 	OrderNo            string
+	AggregatedDetails  string
+	DetailCount        string
 	WProductID         string
 	ProductName        string
 	ReceivingQuantity  string
@@ -52,8 +58,11 @@ var WOrderDetailColumns = struct {
 	IsShipped          string
 	IsRemaining        string
 }{
+	Register:           "register",
 	WOrderNo:           "w_order_no",
 	OrderNo:            "order_no",
+	AggregatedDetails:  "aggregated_details",
+	DetailCount:        "detail_count",
 	WProductID:         "w_product_id",
 	ProductName:        "product_name",
 	ReceivingQuantity:  "receiving_quantity",
@@ -67,8 +76,11 @@ var WOrderDetailColumns = struct {
 }
 
 var WOrderDetailTableColumns = struct {
+	Register           string
 	WOrderNo           string
 	OrderNo            string
+	AggregatedDetails  string
+	DetailCount        string
 	WProductID         string
 	ProductName        string
 	ReceivingQuantity  string
@@ -80,8 +92,11 @@ var WOrderDetailTableColumns = struct {
 	IsShipped          string
 	IsRemaining        string
 }{
+	Register:           "w_order_details.register",
 	WOrderNo:           "w_order_details.w_order_no",
 	OrderNo:            "w_order_details.order_no",
+	AggregatedDetails:  "w_order_details.aggregated_details",
+	DetailCount:        "w_order_details.detail_count",
 	WProductID:         "w_order_details.w_product_id",
 	ProductName:        "w_order_details.product_name",
 	ReceivingQuantity:  "w_order_details.receiving_quantity",
@@ -95,6 +110,30 @@ var WOrderDetailTableColumns = struct {
 }
 
 // Generated where
+
+type whereHelpernull_Bool struct{ field string }
+
+func (w whereHelpernull_Bool) EQ(x null.Bool) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Bool) NEQ(x null.Bool) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Bool) LT(x null.Bool) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Bool) LTE(x null.Bool) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Bool) GT(x null.Bool) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Bool) GTE(x null.Bool) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Bool) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Bool) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 type whereHelpernull_Int struct{ field string }
 
@@ -172,33 +211,12 @@ func (w whereHelpernull_Int64) NIN(slice []int64) qm.QueryMod {
 func (w whereHelpernull_Int64) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_Int64) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
-type whereHelpernull_Bool struct{ field string }
-
-func (w whereHelpernull_Bool) EQ(x null.Bool) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_Bool) NEQ(x null.Bool) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_Bool) LT(x null.Bool) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_Bool) LTE(x null.Bool) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_Bool) GT(x null.Bool) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_Bool) GTE(x null.Bool) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
-func (w whereHelpernull_Bool) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Bool) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-
 var WOrderDetailWhere = struct {
+	Register           whereHelpernull_Bool
 	WOrderNo           whereHelpernull_String
 	OrderNo            whereHelpernull_Int
+	AggregatedDetails  whereHelpernull_String
+	DetailCount        whereHelpernull_Int64
 	WProductID         whereHelpernull_String
 	ProductName        whereHelpernull_String
 	ReceivingQuantity  whereHelpernull_Int64
@@ -210,8 +228,11 @@ var WOrderDetailWhere = struct {
 	IsShipped          whereHelpernull_Bool
 	IsRemaining        whereHelpernull_Bool
 }{
+	Register:           whereHelpernull_Bool{field: "\"clean\".\"w_order_details\".\"register\""},
 	WOrderNo:           whereHelpernull_String{field: "\"clean\".\"w_order_details\".\"w_order_no\""},
 	OrderNo:            whereHelpernull_Int{field: "\"clean\".\"w_order_details\".\"order_no\""},
+	AggregatedDetails:  whereHelpernull_String{field: "\"clean\".\"w_order_details\".\"aggregated_details\""},
+	DetailCount:        whereHelpernull_Int64{field: "\"clean\".\"w_order_details\".\"detail_count\""},
 	WProductID:         whereHelpernull_String{field: "\"clean\".\"w_order_details\".\"w_product_id\""},
 	ProductName:        whereHelpernull_String{field: "\"clean\".\"w_order_details\".\"product_name\""},
 	ReceivingQuantity:  whereHelpernull_Int64{field: "\"clean\".\"w_order_details\".\"receiving_quantity\""},
@@ -225,9 +246,9 @@ var WOrderDetailWhere = struct {
 }
 
 var (
-	wOrderDetailAllColumns            = []string{"w_order_no", "order_no", "w_product_id", "product_name", "receiving_quantity", "w_shipping_quantity", "w_cancel_quantity", "w_remaining_quantity", "selling_price", "cost_price", "is_shipped", "is_remaining"}
+	wOrderDetailAllColumns            = []string{"register", "w_order_no", "order_no", "aggregated_details", "detail_count", "w_product_id", "product_name", "receiving_quantity", "w_shipping_quantity", "w_cancel_quantity", "w_remaining_quantity", "selling_price", "cost_price", "is_shipped", "is_remaining"}
 	wOrderDetailColumnsWithoutDefault = []string{}
-	wOrderDetailColumnsWithDefault    = []string{"w_order_no", "order_no", "w_product_id", "product_name", "receiving_quantity", "w_shipping_quantity", "w_cancel_quantity", "w_remaining_quantity", "selling_price", "cost_price", "is_shipped", "is_remaining"}
+	wOrderDetailColumnsWithDefault    = []string{"register", "w_order_no", "order_no", "aggregated_details", "detail_count", "w_product_id", "product_name", "receiving_quantity", "w_shipping_quantity", "w_cancel_quantity", "w_remaining_quantity", "selling_price", "cost_price", "is_shipped", "is_remaining"}
 	wOrderDetailPrimaryKeyColumns     = []string{}
 	wOrderDetailGeneratedColumns      = []string{}
 )

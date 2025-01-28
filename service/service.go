@@ -85,8 +85,8 @@ func Transfer(conns infra.DbConnection) string {
 	var num int
 
 	msg := "\n## Data Transfer to Production DB\n\n"
-	msg += "  | # | SCHEMA | TABLE | ENTRY | ELAPSED | … | CHANGE | … | ACCEPT |\n"
-	msg += "  |--:|---|---|--:|--:|---|--:|---|--:|\n"
+	msg += "  | # | SCHEMA | TABLE | ENTRY | ELAPSED | … | CHANGE | … | ACCEPT | CHECK |\n"
+	msg += "  |--:|---|---|--:|--:|---|--:|---|--:|:--:|\n"
 
 	// PROCESS: 1.operators
 	num++
@@ -106,11 +106,11 @@ func Transfer(conns infra.DbConnection) string {
 	msg += cs3.Result.ShowRecord(num)
 	detailMsg += cs3.ShowDetails()
 
-	// // PROCESS: 4.order_details
-	// num++
-	// cs4 := cleansing.NewOrderDetails(conns, refData)
-	// msg += cs4.Result.ShowRecord(num)
-	// detailMsg += cs4.ShowDetails()
+	// PROCESS: 4.order_details
+	num++
+	cs4 := transfer.NewOrderDetails(conns)
+	msg += cs4.Result.ShowRecord(num)
+	detailMsg += cs4.ShowDetails()
 
 	// PROCESS: 詳細メッセージ
 	if len(detailMsg) > 0 {

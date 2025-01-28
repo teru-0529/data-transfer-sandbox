@@ -18,26 +18,27 @@ import (
 )
 
 // STRUCT:
-type OrderPiece struct {
-	OrderNo int
-	bp      *Piece
+type OrderDetailPiece struct {
+	OrderNo       int
+	OrderDetailNo string
+	bp            *Piece
 }
 
 // STRUCT:
-type OrderTransfer struct {
+type OrderDetailsTransfer struct {
 	conns   infra.DbConnection
 	Result  Result
-	Details []*OrderPiece
+	Details []*OrderDetailPiece
 }
 
 // FUNCTION:
-func NewOrders(conns infra.DbConnection) OrderTransfer {
+func NewOrderDetails(conns infra.DbConnection) OrderDetailsTransfer {
 	s := time.Now()
 
 	// INFO: 固定値設定
-	ts := OrderTransfer{
+	ts := OrderDetailsTransfer{
 		conns:  conns,
-		Result: Result{Schema: "orders", TableNameJp: "受注", TableNameEn: "orders"},
+		Result: Result{Schema: "orders", TableNameJp: "受注明細", TableNameEn: "order_details"},
 	}
 	log.Printf("[%s] table transfer ...", ts.Result.TableNameEn)
 
@@ -63,9 +64,9 @@ func NewOrders(conns infra.DbConnection) OrderTransfer {
 }
 
 // FUNCTION: 入力データ量
-func (ts *OrderTransfer) setEntryCount() {
+func (ts *OrderDetailsTransfer) setEntryCount() {
 	// INFO: Workテーブル名
-	num, err := clean.Orders().Count(ctx, ts.conns.WorkDB)
+	num, err := clean.OrderDetails().Count(ctx, ts.conns.WorkDB)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -73,9 +74,9 @@ func (ts *OrderTransfer) setEntryCount() {
 }
 
 // FUNCTION: 結果データ量
-func (ts *OrderTransfer) setResultCount() {
+func (ts *OrderDetailsTransfer) setResultCount() {
 	// INFO: Productionテーブル名
-	num, err := orders.Orders().Count(ctx, ts.conns.ProductDB)
+	num, err := orders.OrderDetails().Count(ctx, ts.conns.ProductDB)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -83,10 +84,10 @@ func (ts *OrderTransfer) setResultCount() {
 }
 
 // FUNCTION: データ繰り返し取得(1000件単位で分割)
-func (ts *OrderTransfer) iterate() {
+func (ts *OrderDetailsTransfer) iterate() {
 
 	// INFO: 実体の登録件数取得(EXT)
-	num, err := clean.WOrders().Count(ctx, ts.conns.WorkDB)
+	num, err := clean.WOrderDetails().Count(ctx, ts.conns.WorkDB)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -97,7 +98,7 @@ func (ts *OrderTransfer) iterate() {
 	// PROCESS: 1000件単位でのSQL実行に分割する
 	for section := 0; section < sectionCount(int(num)); section++ {
 		// INFO: Workテーブル名
-		records, err := clean.WOrders(qm.Limit(LIMIT), qm.Offset(section*LIMIT)).All(ctx, ts.conns.WorkDB)
+		records, err := clean.WOrderDetails(qm.Limit(LIMIT), qm.Offset(section*LIMIT)).All(ctx, ts.conns.WorkDB)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -113,8 +114,7 @@ func (ts *OrderTransfer) iterate() {
 }
 
 // FUNCTION: レコード毎のデータ登録
-func (ts *OrderTransfer) saveData(record *clean.WOrder) {
-	orgOrderNo := record.OrderNo.Int
+func (ts *OrderDetailsTransfer) saveData(record *clean.WOrderDetail) {
 
 	if record.Register.Bool {
 		// PROCESS: 登録条件を満たしたとき
@@ -130,58 +130,50 @@ func (ts *OrderTransfer) saveData(record *clean.WOrder) {
 
 		// PROCESS: データ登録
 		// INFO: productionテーブル
-		rec := orders.Order{
-			OrderNo:             record.WOrderNo.String,
-			OrderDate:           record.OrderDate.Time,
-			OrderPic:            record.OperatorID.String,
-			CustomerName:        record.CustomerName.String,
-			TotalOrderPrice:     int(record.WTotalOrderPrice.Int64),
-			RemainingOrderPrice: int(record.WRemainingOrderPrice.Int64),
-			OrderStatus:         status,
-			CreatedBy:           OPERATION_USER,
-			UpdatedBy:           OPERATION_USER,
+		rec := orders.OrderDetail{
+			OrderNo:           record.WOrderNo.String,
+			ProductID:         record.WProductID.String,
+			ReceivingQuantity: int(record.ReceivingQuantity.Int64),
+			ShippingQuantity:  int(record.WShippingQuantity.Int64),
+			CancelQuantity:    int(record.WCancelQuantity.Int64),
+			RemainingQuantity: int(record.WRemainingQuantity.Int64),
+			CostPrice:         record.CostPrice.Int,
+			SelllingPrice:     record.SellingPrice.Int,
+			OrderStatus:       status,
+			CreatedBy:         OPERATION_USER,
+			UpdatedBy:         OPERATION_USER,
 		}
 		err := rec.Insert(ctx, ts.conns.ProductDB, boil.Infer())
 
 		// PROCESS: 登録に失敗した場合は、削除(エラーログを格納)
 		if err != nil {
 			// INFO: piece
-			piece := OrderPiece{
-				OrderNo: orgOrderNo,
-				bp:      removedPiece(fmt.Sprintf("%v", err)),
+			piece := OrderDetailPiece{
+				OrderNo:       record.OrderNo.Int,
+				OrderDetailNo: record.AggregatedDetails.String,
+				bp:            removedPiece(fmt.Sprintf("%v", err)),
 			}
 			ts.Result.setResult(piece.bp)
 			ts.Details = append(ts.Details, &piece)
-		}
-
-		// PROCESS: 分割している場合
-		if record.Logging.Bool {
-			no := record.ChangeCount.Int64
-			// INFO: piece
-			piece := OrderPiece{
-				OrderNo: orgOrderNo,
-				bp: modifiedPiece(
-					fmt.Sprintf("明細に`販売単価`もしくは`商品原価`が一致しない同一の商品が存在するため、受注を [%d] 件に分割しました。", no+1), int(no)),
-			}
-			ts.Result.setResult(piece.bp)
-			ts.Details = append(ts.Details, &piece)
-
 		}
 
 	} else {
 		// PROCESS: 登録条件を満たさないとき
+		no := record.DetailCount.Int64
 		// INFO: piece
-		piece := OrderPiece{
-			OrderNo: orgOrderNo,
-			bp:      removedPiece("明細が存在しないため、登録しませんでした。"),
+		piece := OrderDetailPiece{
+			OrderNo:       record.OrderNo.Int,
+			OrderDetailNo: record.AggregatedDetails.String,
+			bp:            modifiedPiece(fmt.Sprintf("受注明細 [%d] 件を集約ししました。", no), int(1-no)),
 		}
 		ts.Result.setResult(piece.bp)
 		ts.Details = append(ts.Details, &piece)
+
 	}
 }
 
 // FUNCTION: 詳細情報の出力
-func (ts *OrderTransfer) ShowDetails() string {
+func (ts *OrderDetailsTransfer) ShowDetails() string {
 	if len(ts.Details) == 0 {
 		return ""
 	}
@@ -189,12 +181,13 @@ func (ts *OrderTransfer) ShowDetails() string {
 	var msg string
 	msg += fmt.Sprintf("\n### %s\n\n", ts.Result.TableName())
 
-	msg += "  | # | order_no | … | RESULT | CHANGE | MESSAGE |\n"
-	msg += "  |--:|---|---|:-:|:-:|---|\n"
+	msg += "  | # | order_no | order_detail_no | … | RESULT | CHANGE | MESSAGE |\n"
+	msg += "  |--:|---|---|---|:-:|:-:|---|\n"
 	for i, piece := range ts.Details {
-		msg += fmt.Sprintf("  | %d | %d | … | %s | %+d | %s |\n",
+		msg += fmt.Sprintf("  | %d | %d | %s | … | %s | %+d | %s |\n",
 			i+1,
 			piece.OrderNo,
+			piece.OrderDetailNo,
 			piece.bp.status,
 			piece.bp.count,
 			piece.bp.msg,

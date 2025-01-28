@@ -65,6 +65,7 @@ type Result struct {
 	TableNameEn string
 	EntryCount  int
 	ChangeCount int
+	ResultCount int
 	duration    float64
 }
 
@@ -74,8 +75,12 @@ func (r Result) TableName() string {
 }
 
 // FUNCTION:
-func (r Result) AcceptCount() int {
-	return r.EntryCount + r.ChangeCount
+func (r Result) CheckRecord() string {
+	if r.EntryCount+r.ChangeCount == r.ResultCount {
+		return ""
+	} else {
+		return "❎"
+	}
 }
 
 // FUNCTION: trauncate文の生成
@@ -85,13 +90,7 @@ func (r Result) truncateSql() string {
 
 // FUNCTION: Limit単位の呼び出し回数
 func (r Result) sectionCount() int {
-	// LIMIT=5
-	// EntryCount=0 ・・・(0 -1 +5) / 5 = 4 / 5 = 0
-	// EntryCount=1 ・・・(1 -1 +5) / 5 = 5 / 5 = 1
-	// EntryCount=4 ・・・(4 -1 +5) / 5 = 8 / 5 = 1
-	// EntryCount=5 ・・・(5 -1 +5) / 5 = 9 / 5 = 1
-	// EntryCount=6 ・・・(6 -1 +5) / 5 = 10 / 5 = 2
-	return (r.EntryCount - 1 + LIMIT) / LIMIT
+	return sectionCount(r.EntryCount)
 }
 
 // FUNCTION: ElapseTime
@@ -107,18 +106,30 @@ func (r *Result) setResult(bp *Piece) {
 
 // FUNCTION: clensingResult件数
 func (r *Result) ShowRecord(num int) string {
-	return fmt.Sprintf("  | %d. | %s | %s | %s | %s | … | %s | … | %s |\n",
+	return fmt.Sprintf("  | %d. | %s | %s | %s | %s | … | %s | … | %s | %s |\n",
 		num,
 		r.Schema,
 		r.TableName(),
 		p.Sprintf("%d", r.EntryCount),
 		p.Sprintf("%3.2fs", r.Elapsed()),
 		p.Sprintf("%+d", r.ChangeCount),
-		p.Sprintf("%d", r.AcceptCount()),
+		p.Sprintf("%d", r.ResultCount),
+		r.CheckRecord(),
 	)
 }
 
 // FUNCTION: MDで赤字にする
 func redFont(str string) string {
 	return fmt.Sprintf("<span style=\"color:red;\">%s</span>", str)
+}
+
+// FUNCTION: Limit単位の呼び出し回数
+func sectionCount(val int) int {
+	// LIMIT=5
+	// val=0 ・・・(0 -1 +5) / 5 = 4 / 5 = 0
+	// val=1 ・・・(1 -1 +5) / 5 = 5 / 5 = 1
+	// val=4 ・・・(4 -1 +5) / 5 = 8 / 5 = 1
+	// val=5 ・・・(5 -1 +5) / 5 = 9 / 5 = 1
+	// val=6 ・・・(6 -1 +5) / 5 = 10 / 5 = 2
+	return (val - 1 + LIMIT) / LIMIT
 }
