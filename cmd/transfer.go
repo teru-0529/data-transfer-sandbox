@@ -37,8 +37,7 @@ var transferCmd = &cobra.Command{
 
 		// PROCESS: ローカル用DML
 		dumpfilePathLocal := path.Join(dirPath, DML_PROD_DB_LOCAL)
-		extLocalArgs := []string{"--data-only"}
-		if err := container.DumpDb(dumpfilePathLocal, extLocalArgs); err != nil {
+		if err := container.DumpDb(dumpfilePathLocal, localLoadCompose()); err != nil {
 			return err
 		}
 
@@ -84,4 +83,14 @@ var transferCmd = &cobra.Command{
 
 // FUNCTION:
 func init() {
+}
+
+// FUNCTION:
+func localLoadCompose() []string {
+	return []string{
+		"--data-only",
+		"--schema=orders",
+		// "-t orders.operators",
+		"--exclude-table=orders.order_details",
+	}
 }
