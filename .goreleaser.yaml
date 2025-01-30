@@ -44,6 +44,9 @@ archives:
       - README*
       - docs/*
       - .env
+      - workdb/compose.yaml
+      - workdb/.env
+      - workdb/data/*
 
 changelog:
   sort: asc

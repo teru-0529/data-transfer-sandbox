@@ -18,40 +18,32 @@ import (
 )
 
 // STRUCT:
-type OrderDetailsClensing struct {
-	conns   infra.DbConnection
-	Result  Result
-	Details []*OrderDetailPiece
-}
-
 type OrderDetailPiece struct {
 	OrderNo       int
 	OrderDetailNo int
-	status        Status
-	approved      bool
-	message       string
+	bp            *Piece
 }
 
-// FUNCTION: ステータスの変更
-func (p *OrderDetailPiece) setStatus(status Status, approved bool) {
-	p.status = judgeStatus(p.status, status)
-	p.approved = p.approved && approved
-}
-
-// FUNCTION: メッセージの追加
-func (p *OrderDetailPiece) addMessage(msg string, id string) {
-	p.message = genMessage(p.message, msg, id)
+// STRUCT:
+type OrderDetailsClensing struct {
+	conns     infra.DbConnection
+	refData   *RefData
+	Result    Result
+	Details   []*OrderDetailPiece
+	generator *OrderNoGenerator
 }
 
 // FUNCTION:
-func NewOrderDetails(conns infra.DbConnection) OrderDetailsClensing {
+func NewOrderDetails(conns infra.DbConnection, refData *RefData) OrderDetailsClensing {
 	s := time.Now()
 
 	// INFO: 固定値設定
-	cs := OrderDetailsClensing{conns: conns, Result: Result{
-		TableNameJp: "受注明細",
-		TableNameEn: "order_details",
-	}}
+	cs := OrderDetailsClensing{
+		conns:     conns,
+		refData:   refData,
+		Result:    Result{TableNameJp: "受注明細", TableNameEn: "order_details"},
+		generator: NewOrderNoGenerator(),
+	}
 	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
 	// PROCESS: 入力データ量
@@ -101,6 +93,12 @@ func (cs *OrderDetailsClensing) iterate() {
 			// PROCESS: レコード毎のクレンジング後データ登録
 			cs.saveData(record, piece)
 
+			// PROCESS: 処理結果の登録
+			cs.Result.setResult(piece.bp)
+			if piece.bp.isWarn() {
+				cs.Details = append(cs.Details, piece)
+			}
+
 			bar.Increment()
 		}
 	}
@@ -113,29 +111,29 @@ func (cs *OrderDetailsClensing) checkAndClensing(record *legacy.OrderDetail) *Or
 	piece := OrderDetailPiece{
 		OrderNo:       record.OrderNo,
 		OrderDetailNo: record.OrderDetailNo,
-		status:        NO_CHANGE,
-		approved:      true,
+		bp:            NewPiece(),
 	}
 
 	// PROCESS: #4-01: shipping_flag/ cancel_flagの両方がtrueの場合、移行対象から除外する。
 	if record.ShippingFlag && record.CanceledFlag {
-		piece.setStatus(REMOVE, true)
-		piece.addMessage("shipping_flag(出荷済フラグ)、canceled_flag(キャンセルフラグ)がいずれも `true`。移行対象から除外。", "#4-01")
+		piece.bp.removed().addMessage(
+			"shipping_flag(出荷済フラグ)、canceled_flag(キャンセルフラグ)がいずれも `true`。移行対象から除外。", "#4-01")
 	}
 
 	// PROCESS: #4-02: order_noが[受注]に存在しない場合、移行対象から除外する。
-	ok1, _ := legacy.OrderExists(ctx, cs.conns.LegacyDB, record.OrderNo)
-	if !ok1 {
-		piece.setStatus(REMOVE, false)
-		piece.addMessage(fmt.Sprintf("order_no(受注番号) が[受注]に存在しない。移行対象から除外 `%d`。", record.OrderNo), "#4-02")
+	_, exist1 := cs.refData.OrderNoSet[record.OrderNo]
+	if !exist1 {
+		piece.bp.approveStay() //TODO: 承認確認中
+		piece.bp.removed().addMessage(
+			fmt.Sprintf("order_no(受注番号) が[受注]に存在しない。移行対象から除外 `%d`。", record.OrderNo), "#4-02")
 	}
 
 	// PROCESS: #4-03: product_nameが[商品]に存在しない場合、移行対象から除外する。
 	// TODO: クレンジング処理未記載の状況際限のためコメントアウト
-	// ok2, _ := legacy.ProductExists(ctx, cs.conns.LegacyDB, record.ProductName)
-	// if !ok2 {
-	// 	piece.setStatus(REMOVE, true)
-	// 	piece.addMessage(fmt.Sprintf("product_name(商品名) が[商品]に存在しない。移行対象から除外 `%s`。", record.ProductName), "#4-03")
+	// _, exist2 := cs.refData.ProductNameSet[record.ProductName]
+	// if !exist2 {
+	// 	piece.bp.removed().addMessage(
+	// 		fmt.Sprintf("product_name(商品名) が[商品]に存在しない。移行対象から除外 `%s`。", record.ProductName), "#4-03")
 	// }
 
 	return &piece
@@ -144,10 +142,12 @@ func (cs *OrderDetailsClensing) checkAndClensing(record *legacy.OrderDetail) *Or
 // FUNCTION: レコード毎のクレンジング後データ登録
 func (cs *OrderDetailsClensing) saveData(record *legacy.OrderDetail, piece *OrderDetailPiece) {
 	// PROCESS: REMOVEDの場合はDBに登録しない
-	if piece.status == REMOVE {
-		cs.setResult(piece)
+	if piece.bp.isRemove() {
 		return
 	}
+
+	// INFO: 受注番号の採番
+	wOrderNo := cs.generator.generate(record.OrderNo, record.ProductName, record.SellingPrice, record.CostPrice)
 
 	// PROCESS: データ登録
 	// INFO: cleanテーブル
@@ -160,6 +160,7 @@ func (cs *OrderDetailsClensing) saveData(record *legacy.OrderDetail, piece *Orde
 		CancelFlag:        record.CanceledFlag,
 		SellingPrice:      record.SellingPrice,
 		CostPrice:         record.CostPrice,
+		WOrderNo:          wOrderNo,
 		CreatedBy:         OPERATION_USER,
 		UpdatedBy:         OPERATION_USER,
 	}
@@ -167,23 +168,7 @@ func (cs *OrderDetailsClensing) saveData(record *legacy.OrderDetail, piece *Orde
 
 	// PROCESS: 登録に失敗した場合は、削除(エラーログを格納、未承認扱い)
 	if err != nil {
-		piece.setStatus(REMOVE, false)
-		piece.addMessage(fmt.Sprintf("%v", err), "")
-	}
-	cs.setResult(piece)
-}
-
-// FUNCTION: クレンジング結果の登録
-func (cs *OrderDetailsClensing) setResult(piece *OrderDetailPiece) {
-	switch piece.status {
-	case NO_CHANGE:
-		cs.Result.UnchangeCount++
-	case MODIFY:
-		cs.Result.ModifyCount++
-		cs.Details = append(cs.Details, piece)
-	case REMOVE:
-		cs.Result.RemoveCount++
-		cs.Details = append(cs.Details, piece)
+		piece.bp.dbError(err)
 	}
 }
 
@@ -203,11 +188,62 @@ func (cs *OrderDetailsClensing) ShowDetails() string {
 			i+1,
 			piece.OrderNo,
 			piece.OrderDetailNo,
-			piece.status,
-			approveStr(piece.approved),
-			piece.message,
+			piece.bp.status,
+			piece.bp.approve,
+			piece.bp.msg,
 		)
 	}
 
 	return msg
+}
+
+// STRUCT: 受注番号ジェネレータ
+type OrderNoGenerator struct {
+	OrderNoMap    map[OrderNoGenKey]string //受注番号
+	OrderCountMap map[OrderNoCountKey]int  //商品ごとの受注番号数
+}
+
+type OrderNoGenKey struct {
+	orderNo      int
+	productName  string
+	sellingPrice int
+	costPrice    int
+}
+type OrderNoCountKey struct {
+	orderNo     int
+	productName string
+}
+
+// FUNCTION: generatorの生成
+func NewOrderNoGenerator() *OrderNoGenerator {
+	return &OrderNoGenerator{
+		OrderNoMap:    map[OrderNoGenKey]string{},
+		OrderCountMap: map[OrderNoCountKey]int{},
+	}
+}
+
+// FUNCTION: 受注番号の採番
+func (gen *OrderNoGenerator) generate(orderNo int, productName string, sellingPrice int, costPrice int) string {
+	genKey := OrderNoGenKey{orderNo: orderNo, productName: productName, sellingPrice: sellingPrice, costPrice: costPrice}
+	countKey := OrderNoCountKey{orderNo: orderNo, productName: productName}
+	_ = countKey
+	// PROCESS: すでに管理されている場合は該当する受注番号を返す
+	result, exist := gen.OrderNoMap[genKey]
+	if exist {
+		return result
+	}
+
+	// PROCESS: シーケンス番号を取得(存在しない場合は0)
+	no, exist := gen.OrderCountMap[countKey]
+	if !exist {
+		gen.OrderCountMap[countKey] = 0
+		no = 0
+	}
+
+	// PROCESS: 受注番号を構成しMapに格納
+	result = fmt.Sprintf("RO-9%05d%d", orderNo, no)
+	gen.OrderNoMap[genKey] = result
+	gen.OrderCountMap[countKey]++
+
+	return result
 }

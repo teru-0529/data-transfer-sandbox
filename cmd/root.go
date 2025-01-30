@@ -5,17 +5,22 @@ package cmd
 
 import (
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 )
 
-var tZero = time.Unix(0, 0).UTC()
-
+// STRUCT: リリース情報
 var (
 	version     string
 	releaseDate string
 )
+
+// STRUCT: ワークDBのダンプファイル名
+const DML_WORK_DB = "dml-work.sql.gz"
+const DML_PROD_DB_LOCAL = "dml-local.sql.gz"
+const DDL_PROD_DB_AWS = "ddl-aws.sql.gz"
+const DML_PROD_DB_AWS = "dml-aws.sql.gz"
+
 var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
@@ -44,4 +49,5 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(cleansingCmd)
 	rootCmd.AddCommand(loadCmd)
+	rootCmd.AddCommand(transferCmd)
 }

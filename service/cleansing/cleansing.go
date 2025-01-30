@@ -9,6 +9,8 @@ import (
 	"math"
 
 	"github.com/volatiletech/null/v8"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 // TITLE: クレンジング共通
@@ -25,6 +27,9 @@ var OPERATION_USER = null.StringFrom("DATA_TRANSFER")
 // STRUCT: ダミーコンテキスト
 var ctx context.Context = context.Background()
 
+// STRUCT: printer(数値をカンマ区切りで出力するために利用)
+var p = message.NewPrinter(language.Japanese)
+
 // STRUCT: クレンジング結果
 type Status string
 
@@ -32,7 +37,79 @@ const NO_CHANGE Status = "⭕"
 const MODIFY Status = "⚠<br>MODIFY"
 const REMOVE Status = "⛔<br>REMOVE"
 
-// STRUCT:
+// STRUCT: 承認状況
+type Approve string
+
+const APPROVED Approve = "✅"
+const STAY Approve = ""
+const NOT_FINDED Approve = "🔰<br>CHECK!"
+
+// STRUCT: クレンジング後のメッセージを管理
+type Piece struct {
+	status  Status
+	approve Approve
+	msg     string
+}
+
+// FUNCTION:
+func NewPiece() *Piece {
+	return &Piece{status: NO_CHANGE, approve: APPROVED}
+}
+
+// FUNCTION: 登録なし
+func (p *Piece) isRemove() bool {
+	return p.status == REMOVE
+}
+
+// FUNCTION: ワーニングあり
+func (p *Piece) isWarn() bool {
+	return p.status != NO_CHANGE
+}
+
+// FUNCTION: 登録なし
+func (p *Piece) removed() *Piece {
+	p.status = REMOVE
+	return p
+}
+
+// FUNCTION: クレンジング
+func (p *Piece) modified() *Piece {
+	if p.status == NO_CHANGE {
+		p.status = MODIFY
+	}
+	return p
+}
+
+// FUNCTION: DBエラー
+func (p *Piece) dbError(err error) {
+	p.removed()
+	p.approve = NOT_FINDED
+	p.addMessage(redFont(fmt.Sprintf("%v", err)), "")
+}
+
+// FUNCTION: 承認待ち
+func (p *Piece) approveStay() *Piece {
+	if p.approve == APPROVED {
+		p.approve = STAY
+	}
+	return p
+}
+
+// FUNCTION: メッセージの追加
+func (p *Piece) addMessage(msg string, id string) *Piece {
+	br := ""
+	_id := ""
+	if len(p.msg) != 0 {
+		br = "<BR>"
+	}
+	if id != "" {
+		_id = fmt.Sprintf("[%s]", id)
+	}
+	p.msg += fmt.Sprintf("%s● %s %s", br, _id, msg)
+	return p
+}
+
+// STRUCT: クレンジング結果
 type Result struct {
 	TableNameJp   string
 	TableNameEn   string
@@ -40,40 +117,8 @@ type Result struct {
 	UnchangeCount int
 	ModifyCount   int
 	RemoveCount   int
+	DbCheckCount  int
 	duration      float64
-}
-
-// FUNCTION:
-func approveStr(apploved bool) string {
-	if apploved {
-		return "✅"
-	} else {
-		return ""
-	}
-}
-
-// FUNCTION:
-func judgeStatus(baseStatus, status Status) Status {
-	if status == REMOVE || baseStatus == REMOVE {
-		return REMOVE
-	} else if status == MODIFY || baseStatus == MODIFY {
-		return MODIFY
-	} else {
-		return NO_CHANGE
-	}
-}
-
-// FUNCTION:
-func genMessage(msg, appendMsg string, id string) string {
-	br := ""
-	_id := ""
-	if len(msg) != 0 {
-		br = "<BR>"
-	}
-	if id != "" {
-		_id = fmt.Sprintf("[%s]", id)
-	}
-	return fmt.Sprintf("%s%s● %s %s", msg, br, _id, appendMsg)
 }
 
 // FUNCTION:
@@ -114,8 +159,67 @@ func (r Result) sectionCount() int {
 	return (r.EntryCount - 1 + LIMIT) / LIMIT
 }
 
-// FUNCTION: trauncate文の生成
+// FUNCTION: ElapseTime
 func (r Result) Elapsed() float64 {
 	// 小数点3位で四捨五入
 	return math.Round(r.duration*100) / 100
+}
+
+// FUNCTION: クレンジング結果の登録
+func (r *Result) setResult(bp *Piece) {
+	switch bp.status {
+	case NO_CHANGE:
+		r.UnchangeCount++
+	case MODIFY:
+		r.ModifyCount++
+	case REMOVE:
+		r.RemoveCount++
+	}
+	if bp.approve == NOT_FINDED {
+		r.DbCheckCount++
+	}
+}
+
+// FUNCTION: clensingResult件数
+func (r *Result) ShowRecord(num int) string {
+	var removeCountStr string
+	if r.DbCheckCount > 0 {
+		redmsg := redFont(p.Sprintf("※%d", r.DbCheckCount))
+		removeCountStr = p.Sprintf("%d(%s)", r.RemoveCount, redmsg)
+	} else {
+		removeCountStr = p.Sprintf("%d", r.RemoveCount)
+	}
+
+	return fmt.Sprintf("  | %d. | %s | %s | %s | … | %s | %s | %s | … | %s | %3.1f%% |\n",
+		num,
+		r.TableName(),
+		p.Sprintf("%d", r.EntryCount),
+		p.Sprintf("%3.2fs", r.Elapsed()),
+		p.Sprintf("%d", r.UnchangeCount),
+		p.Sprintf("%d", r.ModifyCount),
+		removeCountStr,
+		p.Sprintf("%d", r.AcceptCount()),
+		r.AcceptRate(),
+	)
+}
+
+// STRUCT: リファレンスデータ
+type RefData struct {
+	OperatorNameSet map[string]struct{} //担当者名
+	ProductNameSet  map[string]struct{} //商品名
+	OrderNoSet      map[int]struct{}    //受注番号
+}
+
+// FUNCTION: リファレンスデータの作成
+func NewRefData() *RefData {
+	return &RefData{
+		OperatorNameSet: map[string]struct{}{},
+		ProductNameSet:  map[string]struct{}{},
+		OrderNoSet:      map[int]struct{}{},
+	}
+}
+
+// FUNCTION: MDで赤字にする
+func redFont(str string) string {
+	return fmt.Sprintf("<span style=\"color:red;\">%s</span>", str)
 }

@@ -19,43 +19,30 @@ import (
 )
 
 // STRUCT:
+type OperatorPiece struct {
+	OperatorId string
+	bp         *Piece
+}
+
+// STRUCT:
 type OperatorClensing struct {
 	conns   infra.DbConnection
+	refData *RefData
 	Result  Result
 	Details []*OperatorPiece
 	keys    map[string]struct{}
 }
 
-type OperatorPiece struct {
-	OperatorId string
-	status     Status
-	approved   bool
-	message    string
-}
-
-// FUNCTION: ステータスの変更
-func (p *OperatorPiece) setStatus(status Status, approved bool) {
-	p.status = judgeStatus(p.status, status)
-	p.approved = p.approved && approved
-}
-
-// FUNCTION: メッセージの追加
-func (p *OperatorPiece) addMessage(msg string, id string) {
-	p.message = genMessage(p.message, msg, id)
-}
-
 // FUNCTION:
-func NewOperators(conns infra.DbConnection) OperatorClensing {
+func NewOperators(conns infra.DbConnection, refData *RefData) OperatorClensing {
 	s := time.Now()
 
 	// INFO: 固定値設定
 	cs := OperatorClensing{
-		conns: conns,
-		Result: Result{
-			TableNameJp: "担当者",
-			TableNameEn: "operators",
-		},
-		keys: map[string]struct{}{},
+		conns:   conns,
+		refData: refData,
+		Result:  Result{TableNameJp: "担当者", TableNameEn: "operators"},
+		keys:    map[string]struct{}{},
 	}
 	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
@@ -79,6 +66,7 @@ func NewOperators(conns infra.DbConnection) OperatorClensing {
 		UpdatedBy:    OPERATION_USER,
 	}
 	rec.Insert(ctx, cs.conns.WorkDB, boil.Infer())
+	cs.refData.OperatorNameSet["N/A"] = struct{}{}
 
 	duration := time.Since(s).Seconds()
 	cs.Result.duration = duration
@@ -115,6 +103,12 @@ func (cs *OperatorClensing) iterate() {
 			// PROCESS: レコード毎のクレンジング後データ登録
 			cs.saveData(record, piece)
 
+			// PROCESS: 処理結果の登録
+			cs.Result.setResult(piece.bp)
+			if piece.bp.isWarn() {
+				cs.Details = append(cs.Details, piece)
+			}
+
 			bar.Increment()
 		}
 	}
@@ -126,17 +120,14 @@ func (cs *OperatorClensing) checkAndClensing(record *legacy.Operator) *OperatorP
 	// INFO: piece
 	piece := OperatorPiece{
 		OperatorId: record.OperatorID,
-		status:     NO_CHANGE,
-		approved:   true,
+		bp:         NewPiece(),
 	}
 
 	// PROCESS: #1-01: 担当者のユニークチェック、すでに担当者名が存在する場合、移行対象から除外する。
-	_, ok := cs.keys[record.OperatorName]
-	if ok {
-		piece.setStatus(REMOVE, true)
-		piece.addMessage(
-			fmt.Sprintf("operator_name(担当者名) がユニーク制約に違反。移行対象から除外 `%s` 。", record.OperatorName),
-			"#1-01")
+	_, exist := cs.keys[record.OperatorName]
+	if exist {
+		piece.bp.removed().addMessage(
+			fmt.Sprintf("operator_name(担当者名) がユニーク制約に違反。移行対象から除外 `%s` 。", record.OperatorName), "#1-01")
 	}
 
 	// PROCESS: #1-02: 担当者IDが5桁ではない場合、末尾に「X」を埋めてクレンジングする。
@@ -145,10 +136,9 @@ func (cs *OperatorClensing) checkAndClensing(record *legacy.Operator) *OperatorP
 	if len(operatorId) < 5 {
 		record.OperatorID = operatorId + strings.Repeat("X", 5-len(operatorId))
 
-		piece.setStatus(MODIFY, false)
-		piece.addMessage(
-			fmt.Sprintf("operator_id(担当者ID) の桁数が5桁未満。末尾に`X`を追加しクレンジング (%d桁) 。", len(operatorId)),
-			"#1-02")
+		piece.bp.approveStay() //TODO: 承認確認中
+		piece.bp.modified().addMessage(
+			fmt.Sprintf("operator_id(担当者ID) の桁数が5桁未満。末尾に`X`を追加しクレンジング (%d桁) 。", len(operatorId)), "#1-02")
 	}
 
 	// PROCESS: ユニークキーとして担当者名を登録
@@ -159,8 +149,7 @@ func (cs *OperatorClensing) checkAndClensing(record *legacy.Operator) *OperatorP
 // FUNCTION: レコード毎のクレンジング後データ登録
 func (cs *OperatorClensing) saveData(record *legacy.Operator, piece *OperatorPiece) {
 	// PROCESS: REMOVEDの場合はDBに登録しない
-	if piece.status == REMOVE {
-		cs.setResult(piece)
+	if piece.bp.isRemove() {
 		return
 	}
 
@@ -176,23 +165,10 @@ func (cs *OperatorClensing) saveData(record *legacy.Operator, piece *OperatorPie
 
 	// PROCESS: 登録に失敗した場合は、削除(エラーログを格納、未承認扱い)
 	if err != nil {
-		piece.setStatus(REMOVE, false)
-		piece.addMessage(fmt.Sprintf("%v", err), "")
-	}
-	cs.setResult(piece)
-}
-
-// FUNCTION: クレンジング結果の登録
-func (cs *OperatorClensing) setResult(piece *OperatorPiece) {
-	switch piece.status {
-	case NO_CHANGE:
-		cs.Result.UnchangeCount++
-	case MODIFY:
-		cs.Result.ModifyCount++
-		cs.Details = append(cs.Details, piece)
-	case REMOVE:
-		cs.Result.RemoveCount++
-		cs.Details = append(cs.Details, piece)
+		piece.bp.dbError(err)
+	} else {
+		// INFO: [担当者名]登録
+		cs.refData.OperatorNameSet[record.OperatorName] = struct{}{}
 	}
 }
 
@@ -211,9 +187,9 @@ func (cs *OperatorClensing) ShowDetails() string {
 		msg += fmt.Sprintf("  | %d | %s | … | %s | %s | %s |\n",
 			i+1,
 			piece.OperatorId,
-			piece.status,
-			approveStr(piece.approved),
-			piece.message,
+			piece.bp.status,
+			piece.bp.approve,
+			piece.bp.msg,
 		)
 	}
 

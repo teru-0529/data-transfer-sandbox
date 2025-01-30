@@ -6,8 +6,10 @@ package infra
 // TITLE:環境変数の読込み
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -23,8 +25,9 @@ type Config struct {
 
 // 基本設定
 type BaseConfig struct {
-	LegacyFile string `envconfig:"LEGACY_LOAD_FILE" required:"true"`
-	AppVersion string `envconfig:"APP_VERSION" default:"v0.0.1"`
+	LegacyDataKey string `envconfig:"LEGACY_DATA_KEY" required:"true"`
+	AppVersion    string `envconfig:"APP_VERSION" default:"v0.0.1"`
+	ToolVersion   string
 }
 
 // データベース接続設定
@@ -37,7 +40,7 @@ type DbConfig struct {
 }
 
 // FUNCTION:
-func LeadConfig() (Config, DbConnection, func()) {
+func LeadConfig(version string) (Config, DbConnection, func()) {
 	// PROCESS: envファイルのロード
 	_, err := os.Stat(".env")
 	if !os.IsNotExist(err) {
@@ -50,9 +53,21 @@ func LeadConfig() (Config, DbConnection, func()) {
 	if err = envconfig.Process("", &config); err != nil {
 		log.Fatal(err)
 	}
+	config.Base.ToolVersion = version
 
 	// PROCESS: データベース(Sqlboiler)コネクションの取得
 	conns, cleanUp := initDB(&config)
 
 	return config, conns, cleanUp
+}
+
+// FUNCTION: 出力先のディレクトリ名標準
+func (config Config) DirName() string {
+	return fmt.Sprintf("%s(%s)", config.Base.ToolVersion, config.Base.LegacyDataKey)
+}
+
+// FUNCTION: ユニックスタイムからの秒数に変換し、フォーマット
+func ElapsedStr(now time.Time) string {
+	var tZero = time.Unix(0, 0).UTC()
+	return tZero.Add(time.Duration(time.Since(now))).Format("15:04:05.000")
 }

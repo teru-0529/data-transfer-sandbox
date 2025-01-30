@@ -18,39 +18,29 @@ import (
 )
 
 // STRUCT:
+type OrderPiece struct {
+	OrderNo int
+	bp      *Piece
+}
+
+// STRUCT:
 type OrdersClensing struct {
 	conns   infra.DbConnection
+	refData *RefData
 	Result  Result
 	Details []*OrderPiece
 }
 
-type OrderPiece struct {
-	OrderNo  int
-	status   Status
-	approved bool
-	message  string
-}
-
-// FUNCTION: ステータスの変更
-func (p *OrderPiece) setStatus(status Status, approved bool) {
-	p.status = judgeStatus(p.status, status)
-	p.approved = p.approved && approved
-}
-
-// FUNCTION: メッセージの追加
-func (p *OrderPiece) addMessage(msg string, id string) {
-	p.message = genMessage(p.message, msg, id)
-}
-
 // FUNCTION:
-func NewOrders(conns infra.DbConnection) OrdersClensing {
+func NewOrders(conns infra.DbConnection, refData *RefData) OrdersClensing {
 	s := time.Now()
 
 	// INFO: 固定値設定
-	cs := OrdersClensing{conns: conns, Result: Result{
-		TableNameJp: "受注",
-		TableNameEn: "orders",
-	}}
+	cs := OrdersClensing{
+		conns:   conns,
+		refData: refData,
+		Result:  Result{TableNameJp: "受注", TableNameEn: "orders"},
+	}
 	log.Printf("[%s] table cleansing ...", cs.Result.TableNameEn)
 
 	// PROCESS: 入力データ量
@@ -100,6 +90,12 @@ func (cs *OrdersClensing) iterate() {
 			// PROCESS: レコード毎のクレンジング後データ登録
 			cs.saveData(record, piece)
 
+			// PROCESS: 処理結果の登録
+			cs.Result.setResult(piece.bp)
+			if piece.bp.isWarn() {
+				cs.Details = append(cs.Details, piece)
+			}
+
 			bar.Increment()
 		}
 	}
@@ -110,9 +106,8 @@ func (cs *OrdersClensing) iterate() {
 func (cs *OrdersClensing) checkAndClensing(record *legacy.Order) *OrderPiece {
 	// INFO: piece
 	piece := OrderPiece{
-		OrderNo:  record.OrderNo,
-		status:   NO_CHANGE,
-		approved: true,
+		OrderNo: record.OrderNo,
+		bp:      NewPiece(),
 	}
 
 	// PROCESS: #3-01: order_dateが日付のフォーマットに合致しない場合は、"20250101"にクレンジングする。
@@ -123,8 +118,7 @@ func (cs *OrdersClensing) checkAndClensing(record *legacy.Order) *OrderPiece {
 	if err != nil {
 		record.OrderDate = defOrderDate
 
-		piece.setStatus(MODIFY, true)
-		piece.addMessage(
+		piece.bp.modified().addMessage(
 			fmt.Sprintf("order_date(受注日付) が日付フォーマットではない。`%s` → `%s`(固定値) にクレンジング。", orderDate, defOrderDate), "#3-01")
 	}
 
@@ -132,13 +126,12 @@ func (cs *OrdersClensing) checkAndClensing(record *legacy.Order) *OrderPiece {
 	orderPic := record.OrderPic
 	var defOrderPic = "N/A"
 
-	// PK検索ではないので、legacy.OperatorExists()は使えない。
-	ok1, _ := legacy.Operators(legacy.OperatorWhere.OperatorName.EQ(orderPic)).Exists(ctx, cs.conns.LegacyDB)
-	if !ok1 {
+	_, exist := cs.refData.OperatorNameSet[orderPic]
+	if !exist {
 		record.OrderPic = defOrderPic
 
-		piece.setStatus(MODIFY, true)
-		piece.addMessage(fmt.Sprintf("order_pic(受注担当者名) が[担当者]に存在しない。`%s` → `%s`(固定値) にクレンジング。", orderPic, defOrderPic), "#3-02")
+		piece.bp.modified().addMessage(
+			fmt.Sprintf("order_pic(受注担当者名) が[担当者]に存在しない。`%s` → `%s`(固定値) にクレンジング。", orderPic, defOrderPic), "#3-02")
 	}
 
 	return &piece
@@ -147,8 +140,7 @@ func (cs *OrdersClensing) checkAndClensing(record *legacy.Order) *OrderPiece {
 // FUNCTION: レコード毎のクレンジング後データ登録
 func (cs *OrdersClensing) saveData(record *legacy.Order, piece *OrderPiece) {
 	// PROCESS: REMOVEDの場合はDBに登録しない
-	if piece.status == REMOVE {
-		cs.setResult(piece)
+	if piece.bp.isRemove() {
 		return
 	}
 
@@ -168,23 +160,10 @@ func (cs *OrdersClensing) saveData(record *legacy.Order, piece *OrderPiece) {
 
 	// PROCESS: 登録に失敗した場合は、削除(エラーログを格納、未承認扱い)
 	if err != nil {
-		piece.setStatus(REMOVE, false)
-		piece.addMessage(fmt.Sprintf("%v", err), "")
-	}
-	cs.setResult(piece)
-}
-
-// FUNCTION: クレンジング結果の登録
-func (cs *OrdersClensing) setResult(piece *OrderPiece) {
-	switch piece.status {
-	case NO_CHANGE:
-		cs.Result.UnchangeCount++
-	case MODIFY:
-		cs.Result.ModifyCount++
-		cs.Details = append(cs.Details, piece)
-	case REMOVE:
-		cs.Result.RemoveCount++
-		cs.Details = append(cs.Details, piece)
+		piece.bp.dbError(err)
+	} else {
+		// INFO: [受注番号]登録
+		cs.refData.OrderNoSet[record.OrderNo] = struct{}{}
 	}
 }
 
@@ -203,9 +182,9 @@ func (cs *OrdersClensing) ShowDetails() string {
 		msg += fmt.Sprintf("  | %d | %d | … | %s | %s | %s |\n",
 			i+1,
 			piece.OrderNo,
-			piece.status,
-			approveStr(piece.approved),
-			piece.message,
+			piece.bp.status,
+			piece.bp.approve,
+			piece.bp.msg,
 		)
 	}
 
