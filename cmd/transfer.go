@@ -27,7 +27,7 @@ var transferCmd = &cobra.Command{
 		// PROCESS: config, データベース(Sqlboiler)コネクションの取得
 		config, conns, cleanUp := infra.LeadConfig(version)
 		defer cleanUp()
-		dirPath := path.Join("dist", config.DirName())
+		distDir := config.TransferDir()
 
 		// PROCESS: データ移行実行
 		transferMsg := service.Transfer(conns)
@@ -36,22 +36,20 @@ var transferCmd = &cobra.Command{
 		container := infra.NewContainer("product-db", config.ProductDB)
 
 		// PROCESS: ローカル用DML
-		dumpfilePathLocal := path.Join(dirPath, DML_PROD_DB_LOCAL)
-		if err := container.DumpDb(dumpfilePathLocal, localLoadCompose()); err != nil {
+		filePathLocal := path.Join(distDir, LOCAL_DML)
+		if err := container.DumpDb(filePathLocal, dmlLocalArgs()); err != nil {
 			return err
 		}
 
 		// PROCESS: AWS用DDL
-		dumpfilePathDdlAws := path.Join(dirPath, DDL_PROD_DB_AWS)
-		extDdlAwsArgs := []string{"--schema-only"}
-		if err := container.DumpDb(dumpfilePathDdlAws, extDdlAwsArgs); err != nil {
+		filePathDdl := path.Join(distDir, AWS_DDL)
+		if err := container.DumpDb(filePathDdl, ddlArgs()); err != nil {
 			return err
 		}
 
 		// PROCESS: AWS用DML
-		dumpfilePathDmlAws := path.Join(dirPath, DML_PROD_DB_AWS)
-		extDmlAwsArgs := []string{"--data-only"}
-		if err := container.DumpDb(dumpfilePathDmlAws, extDmlAwsArgs); err != nil {
+		filePathDml := path.Join(distDir, AWS_DML)
+		if err := container.DumpDb(filePathDml, dmlArgs()); err != nil {
 			return err
 		}
 
@@ -62,19 +60,21 @@ var transferCmd = &cobra.Command{
 		msg := "# Data Transfer Result\n\n"
 		msg += fmt.Sprintf("- **operation datetime**: %s\n", now.Format("2006/01/02 15:04:05"))
 		msg += fmt.Sprintf("- **transfer tool version**: %s\n", config.Base.ToolVersion)
-		msg += fmt.Sprintf("- **load legacy DB key**: %s\n", config.Base.LegacyDataKey)
 		msg += fmt.Sprintf("- **production schema version**: %s\n", config.Base.AppVersion)
+		msg += fmt.Sprintf("- **load legacy DB key**: %s\n", config.Base.LegacyDataKey)
 		msg += fmt.Sprintf("- **total elapsed time**: %s\n", elapse)
 		msg += transferMsg
 
-		logPath := path.Join(dirPath, "transfer-log.md")
+		logPath := path.Join(distDir, ".transfer-log.md")
 		if err := infra.WriteLog(logPath, msg, &now); err != nil {
 			return err
 		}
 
 		// PROCESS: cleansingLogのコピー
-		cleansingDir := path.Join("work", config.DirName())
-		infra.FileCopy(path.Join(cleansingDir, "cleansing-log.md"), path.Join(dirPath, "cleansing-log.md"))
+		infra.FileCopy(config.CleansingDir(), distDir, ".cleansing-log.md")
+
+		// PROCESS: clean.sql(テーブル/シーケンス/ファンクション/EnumのDROP)のコピー
+		infra.FileCopy("materials", distDir, "clean.sql")
 
 		log.Printf("total elapsed time … %s\n", elapse)
 		return nil
@@ -86,11 +86,51 @@ func init() {
 }
 
 // FUNCTION:
-func localLoadCompose() []string {
+func dmlLocalArgs() []string {
 	return []string{
+		"--no-owner",
+		"--no-privileges",
+		"--no-security-labels",
+		"--encoding=UTF-8",
+		"--format=P",
+		// INFO: DML情報のみ
 		"--data-only",
-		"--schema=orders",
-		// "-t orders.operators",
-		"--exclude-table=orders.order_details",
+		// INFO: 作成対象のテーブルを記載
+		"--table=orders.operators",
+		"--table=orders.products",
+		// INFO: Load中のトリガー無効化
+		"--disable-triggers",
+	}
+}
+
+// FUNCTION:
+func ddlArgs() []string {
+	return []string{
+		"--no-owner",
+		"--no-privileges",
+		"--no-security-labels",
+		"--encoding=UTF-8",
+		"--format=P",
+		// INFO: DDL情報のみ
+		"--schema-only",
+		// INFO: 作成対象外のスキーマを記載
+		"--exclude-schema=public",
+	}
+}
+
+// FUNCTION:
+func dmlArgs() []string {
+	return []string{
+		"--no-owner",
+		"--no-privileges",
+		"--no-security-labels",
+		"--encoding=UTF-8",
+		"--format=P",
+		// INFO: DML情報のみ
+		"--data-only",
+		// INFO: 作成対象外のテーブルを記載
+		"--exclude-table=public.*",
+		// INFO: Load中のトリガー無効化
+		"--disable-triggers",
 	}
 }

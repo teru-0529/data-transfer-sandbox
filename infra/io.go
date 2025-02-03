@@ -68,14 +68,15 @@ func WriteText(filePath string, msg string) error {
 }
 
 // FUNCTION: ファイルのコピー
-func FileCopy(srcPath string, distPath string) error {
-	src, err := os.Open(srcPath)
+func FileCopy(srcDir string, distDir string, fileName string) error {
+
+	src, err := os.Open(path.Join(srcDir, fileName))
 	if err != nil {
 		return err
 	}
 	defer src.Close()
 
-	dst, err := os.Create(distPath)
+	dst, err := os.Create(path.Join(distDir, fileName))
 	if err != nil {
 		return err
 	}

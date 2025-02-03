@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -61,9 +62,15 @@ func LeadConfig(version string) (Config, DbConnection, func()) {
 	return config, conns, cleanUp
 }
 
-// FUNCTION: 出力先のディレクトリ名標準
-func (config Config) DirName() string {
-	return fmt.Sprintf("%s(%s)", config.Base.ToolVersion, config.Base.LegacyDataKey)
+// FUNCTION: データ変換出力先のディレクトリ:`dist/toolversion/appVersion(legacyDataKey)`
+func (config Config) TransferDir() string {
+	dirName := fmt.Sprintf("%s(%s)", config.Base.AppVersion, config.Base.LegacyDataKey)
+	return path.Join("dist", path.Join(config.Base.ToolVersion, dirName))
+}
+
+// FUNCTION: クレンジング出力先のディレクトリ:`work/toolversion/legacyDataKey`
+func (config Config) CleansingDir() string {
+	return path.Join("work", path.Join(config.Base.ToolVersion, config.Base.LegacyDataKey))
 }
 
 // FUNCTION: ユニックスタイムからの秒数に変換し、フォーマット
