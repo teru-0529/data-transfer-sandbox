@@ -5,6 +5,7 @@
 -- シーケンス
 DROP SEQUENCE IF EXISTS clean.product_id_seed;
 CREATE SEQUENCE clean.product_id_seed START 1;
+ALTER SEQUENCE clean.product_id_seed OWNED BY clean.products.w_product_id;
 
 -- 導出属性:商品ID(WORK)
 

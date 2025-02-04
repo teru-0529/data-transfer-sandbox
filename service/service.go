@@ -10,7 +10,7 @@ import (
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/service/cleansing"
 	"github.com/teru-0529/data-transfer-sandbox/service/transfer"
-	"github.com/teru-0529/data-transfer-sandbox/spec/source/clean"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 )
 
@@ -64,18 +64,22 @@ func Cleansing(conns infra.DbConnection) string {
 	return msg
 }
 
+// STRUCT: テーブル名
+type TableNameOnly struct {
+	Tablename string `boil:"tablename"`
+}
+
 // FUNCTION: cleanDBのテーブルを全てtruncate
 func TruncateCleanDbAll(conns infra.DbConnection) {
-	// INFO: テーブルリスト
-	tables := []string{
-		clean.TableNames.Operators,
-		clean.TableNames.Products,
-		clean.TableNames.Orders,
-		clean.TableNames.OrderDetails,
+	boil.DebugMode = true
+
+	var tables []TableNameOnly
+	queries.Raw("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'clean'").Bind(ctx, conns.WorkDB, &tables)
+	for _, table := range tables {
+		queries.Raw(fmt.Sprintf("truncate clean.%s CASCADE;", table.Tablename)).ExecContext(ctx, conns.WorkDB)
 	}
-	for _, name := range tables {
-		queries.Raw(fmt.Sprintf("truncate clean.%s CASCADE;", name)).ExecContext(ctx, conns.WorkDB)
-	}
+
+	boil.DebugMode = false
 }
 
 // FUNCTION: 移行
