@@ -33,11 +33,11 @@ func WriteLog(filePath string, msg string, timestamp *time.Time) error {
 		// PROCESS: 履歴パスの構成
 		ext := filepath.Ext(filePath)
 		tsStr := timestamp.Format("060102-150405")
-		histryFile := strings.Replace(filepath.Base(filePath), ext, fmt.Sprintf("-%s%s", tsStr, ext), 1)
-		histryFilePath := filepath.Clean(path.Join(filepath.Dir(filePath), path.Join("history", histryFile)))
+		historyFile := strings.Replace(filepath.Base(filePath), ext, fmt.Sprintf("-%s%s", tsStr, ext), 1)
+		historyFilePath := filepath.Clean(path.Join(filepath.Dir(filePath), path.Join("histories", historyFile)))
 
 		// PROCESS: 履歴ログの書き込み
-		if err := WriteText(histryFilePath, msg); err != nil {
+		if err := WriteText(historyFilePath, msg); err != nil {
 			return err
 		}
 	}
@@ -68,14 +68,15 @@ func WriteText(filePath string, msg string) error {
 }
 
 // FUNCTION: ファイルのコピー
-func FileCopy(srcPath string, distPath string) error {
-	src, err := os.Open(srcPath)
+func FileCopy(srcDir string, distDir string, fileName string) error {
+
+	src, err := os.Open(path.Join(srcDir, fileName))
 	if err != nil {
 		return err
 	}
 	defer src.Close()
 
-	dst, err := os.Create(distPath)
+	dst, err := os.Create(path.Join(distDir, fileName))
 	if err != nil {
 		return err
 	}

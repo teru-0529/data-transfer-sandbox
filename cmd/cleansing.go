@@ -27,16 +27,14 @@ var cleansingCmd = &cobra.Command{
 		// PROCESS: config, データベース(Sqlboiler)コネクションの取得
 		config, conns, cleanUp := infra.LeadConfig(version)
 		defer cleanUp()
-		dirPath := path.Join("work", config.DirName())
+		distDir := config.CleansingDir()
 
 		// PROCESS: クレンジング実行
 		clensingMsg := service.Cleansing(conns)
 
 		// PROCESS: データダンプ
-		container := infra.NewContainer("work-db", config.WorkDB)
-		dumpfilePath := path.Join(dirPath, DML_WORK_DB)
-		extArgs := []string{"--data-only", "--schema=clean"}
-		if err := container.DumpDb(dumpfilePath, extArgs); err != nil {
+		filePath := path.Join(distDir, WORK_DML)
+		if err := config.WorkDB.Dump(filePath, dmlWorkArgs()); err != nil {
 			return err
 		}
 
@@ -51,7 +49,7 @@ var cleansingCmd = &cobra.Command{
 		msg += fmt.Sprintf("- **total elapsed time**: %s\n", elapse)
 		msg += clensingMsg
 
-		logPath := path.Join(dirPath, "cleansing-log.md")
+		logPath := path.Join(distDir, ".cleansing-log.md")
 		if err := infra.WriteLog(logPath, msg, &now); err != nil {
 			return err
 		}
@@ -63,4 +61,17 @@ var cleansingCmd = &cobra.Command{
 
 // FUNCTION:
 func init() {
+}
+
+// FUNCTION:
+func dmlWorkArgs() []string {
+	return []string{
+		"--no-owner",
+		"--no-privileges",
+		"--no-security-labels",
+		"--encoding=UTF-8",
+		"--format=P",
+		"--data-only",
+		"--schema=clean",
+	}
 }
