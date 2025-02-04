@@ -40,8 +40,7 @@ var loadCmd = &cobra.Command{
 		service.TruncateCleanDbAll(conns)
 
 		// PROCESS: データロード
-		container := infra.NewContainer("work-db", config.WorkDB)
-		if err := container.LoadDb(loadfilePath); err != nil {
+		if err := config.WorkDB.Load(loadfilePath); err != nil {
 			return err
 		}
 

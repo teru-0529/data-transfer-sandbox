@@ -33,9 +33,8 @@ var cleansingCmd = &cobra.Command{
 		clensingMsg := service.Cleansing(conns)
 
 		// PROCESS: データダンプ
-		container := infra.NewContainer("work-db", config.WorkDB)
 		filePath := path.Join(distDir, WORK_DML)
-		if err := container.DumpDb(filePath, dmlWorkArgs()); err != nil {
+		if err := config.WorkDB.Dump(filePath, dmlWorkArgs()); err != nil {
 			return err
 		}
 

@@ -32,24 +32,21 @@ var transferCmd = &cobra.Command{
 		// PROCESS: データ移行実行
 		transferMsg := service.Transfer(conns)
 
-		// PROCESS: データダンプ
-		container := infra.NewContainer("product-db", config.ProductDB)
-
-		// PROCESS: ローカル用DML
+		// PROCESS: データダンプ(ローカル用DML)
 		filePathLocal := path.Join(distDir, LOCAL_DML)
-		if err := container.DumpDb(filePathLocal, dmlLocalArgs()); err != nil {
+		if err := config.ProductDB.Dump(filePathLocal, dmlLocalArgs()); err != nil {
 			return err
 		}
 
-		// PROCESS: AWS用DDL
+		// PROCESS: データダンプ(AWS用DDL)
 		filePathDdl := path.Join(distDir, AWS_DDL)
-		if err := container.DumpDb(filePathDdl, ddlArgs()); err != nil {
+		if err := config.ProductDB.Dump(filePathDdl, ddlArgs()); err != nil {
 			return err
 		}
 
-		// PROCESS: AWS用DML
+		// PROCESS: データダンプ(AWS用DML)
 		filePathDml := path.Join(distDir, AWS_DML)
-		if err := container.DumpDb(filePathDml, dmlArgs()); err != nil {
+		if err := config.ProductDB.Dump(filePathDml, dmlArgs()); err != nil {
 			return err
 		}
 
