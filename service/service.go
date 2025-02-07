@@ -29,6 +29,7 @@ func Cleansing(conns infra.DbConnection) string {
 	inv = creater.Create(cleansing.NewOperatorsCmd())
 	msg.add(inv.Execute())
 
+	// TODO:
 	// PROCESS: 1.operators
 	num++
 	cs1 := cleansing.NewOperators(conns, refData)
@@ -48,36 +49,33 @@ func Cleansing(conns infra.DbConnection) string {
 	num++
 	cs4 := cleansing.NewOrderDetails(conns, refData)
 	msg.add(cs4.Result.ShowRecord(num), cs4.ShowDetails())
+	// TODO:
 
 	return msg.str()
 }
 
 // FUNCTION: 移行
 func Transfer(conns infra.DbConnection) string {
+	controller := transfer.New(conns)
 
 	msg := NewMessage()
-
-	msg.addHead("\n## Data Transfer to Production DB\n\n")
-	msg.addHead("  | # | SCHEMA | TABLE | ENTRY | ELAPSED | … | CHANGE | … | ACCEPT | CHECK |\n")
-	msg.addHead("  |--:|---|---|--:|--:|---|--:|---|--:|:--:|\n")
-
+	msg.addHead(controller.Head())
 	var inv *transfer.Invoker
-	creater := transfer.NewCreater(conns)
 
 	// PROCESS: 1.operators
-	inv = creater.Create(transfer.NewOperatorsCmd())
+	inv = controller.CreateInvocer(transfer.NewOperatorsCmd())
 	msg.add(inv.Execute())
 
 	// PROCESS: 2.products
-	inv = creater.Create(transfer.NewProductsCmd())
+	inv = controller.CreateInvocer(transfer.NewProductsCmd())
 	msg.add(inv.Execute())
 
 	// PROCESS: 3.orders
-	inv = creater.Create(transfer.NewOrdersCmd())
+	inv = controller.CreateInvocer(transfer.NewOrdersCmd())
 	msg.add(inv.Execute())
 
 	// PROCESS: 4.order_details
-	inv = creater.Create(transfer.NewOrderDetailsCmd())
+	inv = controller.CreateInvocer(transfer.NewOrderDetailsCmd())
 	msg.add(inv.Execute())
 
 	return msg.str()

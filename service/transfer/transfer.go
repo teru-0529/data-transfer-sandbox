@@ -47,16 +47,16 @@ func modifiedPiece(msg string, count int) *Piece {
 	}
 }
 
-// STRUCT: インボーカークリエイター
-type Creater struct {
+// STRUCT: コントローラー
+type Controller struct {
 	num   int
 	ctx   infra.AppCtx
 	conns infra.DbConnection
 }
 
 // FUNCTION:
-func NewCreater(conns infra.DbConnection) *Creater {
-	return &Creater{
+func New(conns infra.DbConnection) *Controller {
+	return &Controller{
 		num:   0,
 		ctx:   infra.NewCtx(),
 		conns: conns,
@@ -64,7 +64,15 @@ func NewCreater(conns infra.DbConnection) *Creater {
 }
 
 // FUNCTION: インボーカーの生成
-func (c *Creater) Create(cmd Command) *Invoker {
+func (c *Controller) CreateInvocer(cmd Command) *Invoker {
 	c.num++
 	return NewInvoker(c.num, c.ctx, c.conns, cmd)
+}
+
+// FUNCTION: ヘッダーメッセージ
+func (c *Controller) Head() string {
+	msg := "\n## Data Transfer to Production DB\n\n"
+	msg += "  | # | SCHEMA | TABLE | ENTRY | ELAPSED | … | CHANGE | … | ACCEPT | CHECK |\n"
+	msg += "  |--:|---|---|--:|--:|---|--:|---|--:|:--:|\n"
+	return msg
 }
