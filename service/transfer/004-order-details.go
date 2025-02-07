@@ -11,7 +11,6 @@ import (
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/spec/product/orders"
 	"github.com/teru-0529/data-transfer-sandbox/spec/source/clean"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -30,21 +29,11 @@ type OrderDetailRecord struct {
 }
 
 // FUNCTION: 更新
-func (r *OrderDetailRecord) applyChanges(ctx infra.AppCtx, db *sql.DB, user null.String) int {
+func (r *OrderDetailRecord) applyChanges(ctx infra.AppCtx, db *sql.DB) int {
 
 	// PROCESS: 明細を集約した場合
 	if !r.record.Register.Bool {
 		return r.setAggregated(int(r.record.DetailCount.Int64))
-	}
-
-	// PROCESS: ステータスの判定
-	var status string
-	if r.record.IsRemaining.Bool {
-		status = orders.OrderStatusWORK_IN_PROGRESS
-	} else if r.record.IsShipped.Bool {
-		status = orders.OrderStatusCOMPLETED
-	} else {
-		status = orders.OrderStatusCANCELED
 	}
 
 	// PROCESS: データ登録
@@ -57,9 +46,9 @@ func (r *OrderDetailRecord) applyChanges(ctx infra.AppCtx, db *sql.DB, user null
 		RemainingQuantity: int(r.record.WRemainingQuantity.Int64),
 		CostPrice:         r.record.CostPrice.Int,
 		SelllingPrice:     r.record.SellingPrice.Int,
-		OrderStatus:       status,
-		CreatedBy:         user,
-		UpdatedBy:         user,
+		OrderStatus:       r.orderStatus(),
+		CreatedBy:         ctx.OperationUser,
+		UpdatedBy:         ctx.OperationUser,
 	}
 	err := rec.Insert(ctx.Ctx, db, boil.Infer())
 
@@ -69,6 +58,17 @@ func (r *OrderDetailRecord) applyChanges(ctx infra.AppCtx, db *sql.DB, user null
 	}
 
 	return 0
+}
+
+// FUNCTION: 受注ステータス
+func (r *OrderDetailRecord) orderStatus() string {
+	if r.record.IsRemaining.Bool {
+		return orders.OrderStatusWORK_IN_PROGRESS
+	} else if r.record.IsShipped.Bool {
+		return orders.OrderStatusCOMPLETED
+	} else {
+		return orders.OrderStatusCANCELED
+	}
 }
 
 // FUNCTION: 更新(エラー)
@@ -154,7 +154,7 @@ func (cmd *OrderDetailsCmd) resultCount(ctx infra.AppCtx, con *sql.DB) int {
 }
 
 // FUNCTION: 詳細メッセージの出力
-func (cmd *OrderDetailsCmd) showDetails(tableName string) string {
+func (cmd *OrderDetailsCmd) showDetails(ctx infra.AppCtx, tableName string) string {
 	if len(cmd.details) == 0 {
 		return ""
 	}
@@ -164,12 +164,12 @@ func (cmd *OrderDetailsCmd) showDetails(tableName string) string {
 	msg += "  | # | order_no | order_detail_nos | … | RESULT | CHANGE | MESSAGE |\n"
 	msg += "  |--:|---|---|---|:-:|:-:|---|\n"
 	for i, m := range cmd.details {
-		msg += fmt.Sprintf("  | %d | %d | %s | … | %s | %+d | %s |\n",
+		msg += fmt.Sprintf("  | %d | %d | %s | … | %s | %s | %s |\n",
 			i+1,
 			m.OrderNo,
 			m.OrderDetailNos,
 			m.bp.status,
-			m.bp.count,
+			ctx.Printer.Sprintf("%+d", m.bp.count),
 			m.bp.msg,
 		)
 	}

@@ -11,7 +11,6 @@ import (
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/spec/product/orders"
 	"github.com/teru-0529/data-transfer-sandbox/spec/source/clean"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -29,13 +28,13 @@ type OperatorRecord struct {
 }
 
 // FUNCTION: 更新
-func (r *OperatorRecord) applyChanges(ctx infra.AppCtx, db *sql.DB, user null.String) int {
+func (r *OperatorRecord) applyChanges(ctx infra.AppCtx, db *sql.DB) int {
 	// PROCESS: データ登録
 	rec := orders.Operator{
 		OperatorID:   r.record.OperatorID,
 		OperatorName: r.record.OperatorName,
-		CreatedBy:    user,
-		UpdatedBy:    user,
+		CreatedBy:    ctx.OperationUser,
+		UpdatedBy:    ctx.OperationUser,
 	}
 	err := rec.Insert(ctx.Ctx, db, boil.Infer())
 
@@ -115,7 +114,7 @@ func (cmd *OperatorsCmd) resultCount(ctx infra.AppCtx, con *sql.DB) int {
 }
 
 // FUNCTION: 詳細メッセージの出力
-func (cmd *OperatorsCmd) showDetails(tableName string) string {
+func (cmd *OperatorsCmd) showDetails(ctx infra.AppCtx, tableName string) string {
 	if len(cmd.details) == 0 {
 		return ""
 	}
@@ -125,11 +124,11 @@ func (cmd *OperatorsCmd) showDetails(tableName string) string {
 	msg += "  | # | operator_id | … | RESULT | CHANGE | MESSAGE |\n"
 	msg += "  |--:|---|---|:-:|:-:|---|\n"
 	for i, m := range cmd.details {
-		msg += fmt.Sprintf("  | %d | %s | … | %s | %+d | %s |\n",
+		msg += fmt.Sprintf("  | %d | %s | … | %s | %s | %s |\n",
 			i+1,
 			m.OperatorId,
 			m.bp.status,
-			m.bp.count,
+			ctx.Printer.Sprintf("%+d", m.bp.count),
 			m.bp.msg,
 		)
 	}

@@ -11,7 +11,6 @@ import (
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/teru-0529/data-transfer-sandbox/infra"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -20,7 +19,7 @@ import (
 
 // STRUCT: レコードインターフェース
 type CleanRecord interface {
-	applyChanges(ctx infra.AppCtx, db *sql.DB, user null.String) int
+	applyChanges(ctx infra.AppCtx, db *sql.DB) int
 }
 
 // STRUCT: レコード(ラッパー)
@@ -30,7 +29,7 @@ type Record struct {
 
 // FUNCTION:
 func (r *Record) save(ctx infra.AppCtx, db *sql.DB) int {
-	return r.rec.applyChanges(ctx, db, ctx.OperationUser)
+	return r.rec.applyChanges(ctx, db)
 }
 
 // STRUCT: コマンドインターフェース
@@ -40,7 +39,7 @@ type Command interface {
 	operationCount(ctx infra.AppCtx, db *sql.DB) int
 	fetchRecords(ctx infra.AppCtx, db *sql.DB, qmArray []qm.QueryMod) []Record
 	resultCount(ctx infra.AppCtx, db *sql.DB) int
-	showDetails(tableName string) string
+	showDetails(ctx infra.AppCtx, tableName string) string
 }
 
 // STRUCT: インボーカー
@@ -88,7 +87,7 @@ func (inv *Invoker) Execute() (string, string) {
 	// PROCESS: 後処理
 	duration := time.Since(s).Seconds()
 	log.Printf("transfer completed … %3.2fs\n", duration)
-	return inv.showRecord(table, result, duration), inv.cmd.showDetails(table.Name())
+	return inv.showRecord(table, result, duration), inv.cmd.showDetails(inv.ctx, table.Name())
 }
 
 // FUNCTION: データ取得/登録

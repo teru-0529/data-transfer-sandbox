@@ -11,7 +11,6 @@ import (
 	"github.com/teru-0529/data-transfer-sandbox/infra"
 	"github.com/teru-0529/data-transfer-sandbox/spec/product/orders"
 	"github.com/teru-0529/data-transfer-sandbox/spec/source/clean"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -29,7 +28,7 @@ type ProductRecord struct {
 }
 
 // FUNCTION: 更新
-func (r *ProductRecord) applyChanges(ctx infra.AppCtx, db *sql.DB, user null.String) int {
+func (r *ProductRecord) applyChanges(ctx infra.AppCtx, db *sql.DB) int {
 	// PROCESS: データ登録
 	rec := orders.Product{
 		ProductID:     r.record.WProductID,
@@ -37,8 +36,8 @@ func (r *ProductRecord) applyChanges(ctx infra.AppCtx, db *sql.DB, user null.Str
 		CostPrice:     r.record.CostPrice,
 		ProductPic:    "Z9999",
 		ProductStatus: orders.ProductStatusON_SALE,
-		CreatedBy:     user,
-		UpdatedBy:     user,
+		CreatedBy:     ctx.OperationUser,
+		UpdatedBy:     ctx.OperationUser,
 	}
 	err := rec.Insert(ctx.Ctx, db, boil.Infer())
 
@@ -118,7 +117,7 @@ func (cmd *ProductsCmd) resultCount(ctx infra.AppCtx, con *sql.DB) int {
 }
 
 // FUNCTION: 詳細メッセージの出力
-func (cmd *ProductsCmd) showDetails(tableName string) string {
+func (cmd *ProductsCmd) showDetails(ctx infra.AppCtx, tableName string) string {
 	if len(cmd.details) == 0 {
 		return ""
 	}
@@ -128,11 +127,11 @@ func (cmd *ProductsCmd) showDetails(tableName string) string {
 	msg += "  | # | product_name | … | RESULT | CHANGE | MESSAGE |\n"
 	msg += "  |--:|---|---|:-:|:-:|---|\n"
 	for i, m := range cmd.details {
-		msg += fmt.Sprintf("  | %d | %s | … | %s | %+d | %s |\n",
+		msg += fmt.Sprintf("  | %d | %s | … | %s | %s | %s |\n",
 			i+1,
 			m.ProductName,
 			m.bp.status,
-			m.bp.count,
+			ctx.Printer.Sprintf("%+d", m.bp.count),
 			m.bp.msg,
 		)
 	}
