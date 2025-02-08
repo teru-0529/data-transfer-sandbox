@@ -28,7 +28,7 @@ type OrderRecord struct {
 }
 
 // FUNCTION: 更新
-func (r *OrderRecord) applyChanges(ctx infra.AppCtx, db *sql.DB) int {
+func (r *OrderRecord) persist(ctx infra.AppCtx, db *sql.DB) int {
 
 	// PROCESS: 明細が存在しない場合
 	if !r.record.Register.Bool {

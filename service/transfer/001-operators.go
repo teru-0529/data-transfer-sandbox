@@ -28,7 +28,7 @@ type OperatorRecord struct {
 }
 
 // FUNCTION: 更新
-func (r *OperatorRecord) applyChanges(ctx infra.AppCtx, db *sql.DB) int {
+func (r *OperatorRecord) persist(ctx infra.AppCtx, db *sql.DB) int {
 	// PROCESS: データ登録
 	rec := orders.Operator{
 		OperatorID:   r.record.OperatorID,

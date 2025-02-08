@@ -28,7 +28,7 @@ type ProductRecord struct {
 }
 
 // FUNCTION: 更新
-func (r *ProductRecord) applyChanges(ctx infra.AppCtx, db *sql.DB) int {
+func (r *ProductRecord) persist(ctx infra.AppCtx, db *sql.DB) int {
 	// PROCESS: データ登録
 	rec := orders.Product{
 		ProductID:     r.record.WProductID,

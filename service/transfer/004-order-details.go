@@ -29,7 +29,7 @@ type OrderDetailRecord struct {
 }
 
 // FUNCTION: 更新
-func (r *OrderDetailRecord) applyChanges(ctx infra.AppCtx, db *sql.DB) int {
+func (r *OrderDetailRecord) persist(ctx infra.AppCtx, db *sql.DB) int {
 
 	// PROCESS: 明細を集約した場合
 	if !r.record.Register.Bool {

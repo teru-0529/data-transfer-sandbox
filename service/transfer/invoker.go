@@ -19,7 +19,7 @@ import (
 
 // STRUCT: レコードインターフェース
 type CleanRecord interface {
-	applyChanges(ctx infra.AppCtx, db *sql.DB) int
+	persist(ctx infra.AppCtx, db *sql.DB) int
 }
 
 // STRUCT: レコード(ラッパー)
@@ -29,7 +29,7 @@ type Record struct {
 
 // FUNCTION:
 func (r *Record) save(ctx infra.AppCtx, db *sql.DB) int {
-	return r.rec.applyChanges(ctx, db)
+	return r.rec.persist(ctx, db)
 }
 
 // STRUCT: コマンドインターフェース
